@@ -1,7 +1,9 @@
 import { NavLink } from 'react-router-dom'
 
 const items = [
-  { to: '/', label: 'Comidas', icon: '📅' },
+  // 🍽️ (la comida como acto) frente al 🥗 de Ingredientes (los alimentos en
+  // sí): tienen que distinguirse de un vistazo, están uno al lado del otro.
+  { to: '/', label: 'Comidas', icon: '🍽️' },
   // "Ingredientes" y no "Alimentos": es el mismo nombre que el campo del
   // formulario de donde salen, así queda claro qué alimenta esta pantalla.
   { to: '/ingredientes', label: 'Ingredientes', icon: '🥗' },
