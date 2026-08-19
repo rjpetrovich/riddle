@@ -62,9 +62,11 @@ export async function fetchContarBano(usuarioId: string): Promise<boolean> {
 }
 
 export async function guardarContarBano(usuarioId: string, activo: boolean): Promise<void> {
+  // upsert y no update: un update sobre un perfil inexistente no falla, afecta
+  // cero filas en silencio. El interruptor se vería encendido y volvería solo a
+  // apagarse al recargar, sin ningún error que lo explique.
   const { error } = await supabase
     .from('profiles')
-    .update({ contar_bano: activo })
-    .eq('id', usuarioId)
+    .upsert({ id: usuarioId, contar_bano: activo }, { onConflict: 'id' })
   if (error) throw error
 }

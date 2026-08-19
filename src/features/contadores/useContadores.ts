@@ -16,7 +16,7 @@ export function useContadores(dia: Date) {
   const queryClient = useQueryClient()
   const clave = ['contadores', user?.id, claveDiaLocal(dia)]
 
-  const { data = CONTADORES_VACIOS } = useQuery({
+  const { data = CONTADORES_VACIOS, error: errorLectura } = useQuery({
     queryKey: clave,
     queryFn: () => fetchContadores(user!.id, dia),
     enabled: !!user,
@@ -47,7 +47,9 @@ export function useContadores(dia: Date) {
     mutacion.mutate(nuevos)
   }
 
-  return { contadores: data, ajustar, error: mutacion.error }
+  // Si la lectura falla, el contador mostraría 0 como si no hubiera nada
+  // registrado, ocultando el problema. Se expone junto al de guardado.
+  return { contadores: data, ajustar, error: mutacion.error ?? errorLectura }
 }
 
 export function useContarBano() {
