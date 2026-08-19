@@ -3,26 +3,89 @@ import { Card } from '../../components/ui/Card'
 import { claveDiaLocal } from '../../lib/dateUtils'
 import { mensajeDeError } from '../../lib/mensajeDeError'
 import { useContadores, useContarBano } from './useContadores'
+import { useMetaAgua } from './useMetaAgua'
 import type { TipoContador } from './contadoresApi'
+
+/**
+ * Anillo de progreso hacia la meta del día.
+ *
+ * Se llena y al completarse cambia a verde: una recompensa diaria concreta,
+ * sobre un hábito que no carga juicio moral como sí lo cargaría medir la
+ * comida. Pasada la meta no muestra reproche ni "exceso", solo queda lleno.
+ */
+function AnilloMeta({ valor, meta }: { valor: number; meta: number }) {
+  const proporcion = meta > 0 ? Math.min(1, valor / meta) : 0
+  const completa = valor >= meta
+  const radio = 13
+  const circunferencia = 2 * Math.PI * radio
+
+  return (
+    <span
+      className="relative flex h-8 w-8 shrink-0 items-center justify-center"
+      aria-label={`${valor} de ${meta}`}
+    >
+      <svg viewBox="0 0 32 32" className="h-8 w-8 -rotate-90">
+        <circle
+          cx="16"
+          cy="16"
+          r={radio}
+          fill="none"
+          strokeWidth="3"
+          className="stroke-slate-200 dark:stroke-slate-700"
+        />
+        <circle
+          cx="16"
+          cy="16"
+          r={radio}
+          fill="none"
+          strokeWidth="3"
+          strokeLinecap="round"
+          className={completa ? 'stroke-emerald-500' : 'stroke-sky-500'}
+          strokeDasharray={circunferencia}
+          strokeDashoffset={circunferencia * (1 - proporcion)}
+          style={{ transition: 'stroke-dashoffset 300ms' }}
+        />
+      </svg>
+      <span className="absolute text-[10px]" aria-hidden>
+        {completa ? '✓' : ''}
+      </span>
+    </span>
+  )
+}
 
 function Fila({
   icono,
   etiqueta,
   valor,
+  meta,
   onAjustar,
 }: {
   icono: string
   etiqueta: string
   valor: number
+  meta?: number
   onAjustar: (delta: number) => void
 }) {
   return (
     <div className="flex items-center justify-between gap-3">
       <span className="flex min-w-0 items-center gap-2">
-        <span aria-hidden className="text-lg">
-          {icono}
+        {meta ? (
+          <AnilloMeta valor={valor} meta={meta} />
+        ) : (
+          <span aria-hidden className="text-lg">
+            {icono}
+          </span>
+        )}
+        <span className="min-w-0">
+          <span className="block truncate text-sm text-slate-700 dark:text-slate-200">
+            {etiqueta}
+          </span>
+          {meta ? (
+            <span className="text-xs text-slate-400">
+              {valor >= meta ? '¡meta del día cumplida!' : `meta: ${meta}`}
+            </span>
+          ) : null}
         </span>
-        <span className="truncate text-sm text-slate-700 dark:text-slate-200">{etiqueta}</span>
       </span>
 
       <span className="flex items-center gap-1">
@@ -101,9 +164,10 @@ export function ContadoresCard({ dia }: { dia: Date }) {
   const { contadores, cargado, ajustar, escribirObservaciones, guardando, error } =
     useContadores(dia)
   const { activo: contarBano } = useContarBano()
+  const { meta } = useMetaAgua()
 
-  const filas: { tipo: TipoContador; icono: string; etiqueta: string }[] = [
-    { tipo: 'vasosAgua', icono: '💧', etiqueta: 'Vasos de agua' },
+  const filas: { tipo: TipoContador; icono: string; etiqueta: string; meta?: number }[] = [
+    { tipo: 'vasosAgua', icono: '💧', etiqueta: 'Vasos de agua', meta },
   ]
   if (contarBano) {
     filas.push({ tipo: 'idasBano', icono: '🚽', etiqueta: 'Idas al baño' })
@@ -117,6 +181,7 @@ export function ContadoresCard({ dia }: { dia: Date }) {
           icono={f.icono}
           etiqueta={f.etiqueta}
           valor={contadores[f.tipo]}
+          meta={f.meta}
           onAjustar={(delta) => ajustar(f.tipo, delta)}
         />
       ))}

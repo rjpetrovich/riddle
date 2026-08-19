@@ -7,12 +7,14 @@ import { useDarkMode } from '../../hooks/useDarkMode'
 import { SymptomsEditor } from './SymptomsEditor'
 import { exportarHistorialCsv } from './exportCsv'
 import { useContarBano } from '../contadores/useContadores'
+import { useMetaAgua } from '../contadores/useMetaAgua'
 
 export function SettingsPage() {
   const { user, signOut } = useAuth()
   const { preference, setPreference } = useDarkMode()
   const [exportando, setExportando] = useState(false)
   const { activo: contarBano, cambiar: cambiarContarBano } = useContarBano()
+  const { meta, setMeta } = useMetaAgua()
 
   async function handleExportar() {
     if (!user) return
@@ -74,6 +76,26 @@ export function SettingsPage() {
               className="h-5 w-5"
             />
           </label>
+
+          <label className="mt-3 flex items-center justify-between gap-3">
+            <span className="text-sm text-slate-700 dark:text-slate-200">
+              💧 Meta diaria de vasos
+            </span>
+            <input
+              type="number"
+              min={1}
+              max={30}
+              value={meta}
+              onChange={(e) => {
+                const n = Number(e.target.value)
+                if (Number.isFinite(n) && n > 0) setMeta(Math.min(30, Math.round(n)))
+              }}
+              className="w-16 rounded-xl border border-slate-300 px-2 py-1 text-center text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            />
+          </label>
+          <p className="mt-1 text-xs text-slate-400">
+            Se guarda en este dispositivo, no en tu cuenta.
+          </p>
         </Card>
 
         <Card>

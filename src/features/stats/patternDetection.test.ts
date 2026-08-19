@@ -3,6 +3,8 @@ import {
   calcularStatsPorAlimento,
   ocurrenciasDeAlimento,
   detectarParesInseparables,
+  faltanParaConcluir,
+  resumenSemanal,
   peorValoracionPorComida,
   type ComidaCruda,
   type SensacionCruda,
@@ -127,6 +129,100 @@ describe('calcularStatsPorAlimento', () => {
     const comidas = [comida('c1', ['a', 'b']), comida('c2', ['b']), comida('c3', ['b'])]
     const stats = calcularStatsPorAlimento(comidas, [])
     expect(stats.map((s) => s.alimentoId)).toEqual(['b', 'a'])
+  })
+})
+
+describe('faltanParaConcluir', () => {
+  it('cuenta lo que falta para llegar al mínimo', () => {
+    const [sinNada] = calcularStatsPorAlimento([comida('c1', ['a'])], [])
+    expect(faltanParaConcluir(sinNada)).toBe(3)
+
+    const [conDos] = calcularStatsPorAlimento(
+      [comida('c1', ['a']), comida('c2', ['a'])],
+      [sens('c1', 'bien'), sens('c2', 'mal')],
+    )
+    expect(faltanParaConcluir(conDos)).toBe(1)
+  })
+
+  it('da cero cuando ya alcanza, y no números negativos', () => {
+    const comidas = ['c1', 'c2', 'c3', 'c4'].map((id) => comida(id, ['a']))
+    const [s] = calcularStatsPorAlimento(
+      comidas,
+      comidas.map((c) => sens(c.id, 'bien')),
+    )
+    expect(faltanParaConcluir(s)).toBe(0)
+  })
+
+  it('no cuenta las comidas sin sensación registrada', () => {
+    // Comerlo cinco veces sin anotar cómo cayó no acerca a ninguna conclusión.
+    const comidas = ['c1', 'c2', 'c3', 'c4', 'c5'].map((id) => comida(id, ['a']))
+    const [s] = calcularStatsPorAlimento(comidas, [])
+    expect(s.vecesComido).toBe(5)
+    expect(faltanParaConcluir(s)).toBe(3)
+  })
+})
+
+describe('resumenSemanal', () => {
+  const nombre = (id: string) => id
+
+  it('avisa qué ingredientes pasaron a tener datos suficientes en el período', () => {
+    // Dos registros viejos y uno nuevo: recién ahora se puede concluir.
+    const comidas = [comida('c1', ['pollo'], 10), comida('c2', ['pollo'], 9), comida('c3', ['pollo'], 1)]
+    const sensaciones = [sens('c1', 'mal'), sens('c2', 'mal'), sens('c3', 'mal')]
+    const desde = new Date('2026-08-19T12:00:00Z')
+    desde.setDate(desde.getDate() - 7)
+
+    const r = resumenSemanal(comidas, sensaciones, desde.toISOString(), nombre)
+    expect(r.nuevosConDatos).toEqual(['pollo'])
+    expect(r.nuevosSospechosos).toEqual(['pollo'])
+    expect(r.registrosNuevos).toBe(1)
+  })
+
+  it('no repite lo que ya se sabía antes del período', () => {
+    const comidas = ['c1', 'c2', 'c3'].map((id) => comida(id, ['pollo'], 20))
+    const sensaciones = comidas.map((c) => sens(c.id, 'mal'))
+    const desde = new Date('2026-08-19T12:00:00Z')
+    desde.setDate(desde.getDate() - 7)
+
+    const r = resumenSemanal(comidas, sensaciones, desde.toISOString(), nombre)
+    expect(r.nuevosConDatos).toEqual([])
+    expect(r.nuevosSospechosos).toEqual([])
+    expect(r.registrosNuevos).toBe(0)
+  })
+
+  it('lista los que están a un solo registro de concluir', () => {
+    const comidas = [comida('c1', ['palta'], 2), comida('c2', ['palta'], 1)]
+    const r = resumenSemanal(
+      comidas,
+      [sens('c1', 'bien'), sens('c2', 'bien')],
+      new Date('2026-08-01T00:00:00Z').toISOString(),
+      nombre,
+    )
+    expect(r.aUnRegistro).toEqual(['palta'])
+  })
+
+  it('detecta un ingrediente que pasó a seguro en el período', () => {
+    const comidas = [comida('c1', ['arroz'], 10), comida('c2', ['arroz'], 9), comida('c3', ['arroz'], 1)]
+    const desde = new Date('2026-08-19T12:00:00Z')
+    desde.setDate(desde.getDate() - 7)
+    const r = resumenSemanal(
+      comidas,
+      comidas.map((c) => sens(c.id, 'bien')),
+      desde.toISOString(),
+      nombre,
+    )
+    expect(r.nuevosSeguros).toEqual(['arroz'])
+  })
+
+  it('con la base vacía no inventa novedades', () => {
+    const r = resumenSemanal([], [], new Date('2026-08-01T00:00:00Z').toISOString(), nombre)
+    expect(r).toEqual({
+      nuevosConDatos: [],
+      nuevosSospechosos: [],
+      nuevosSeguros: [],
+      registrosNuevos: 0,
+      aUnRegistro: [],
+    })
   })
 })
 

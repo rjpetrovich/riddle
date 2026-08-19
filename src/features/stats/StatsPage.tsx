@@ -6,7 +6,8 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import { Spinner } from '../../components/ui/Spinner'
 import { Chip } from '../../components/ui/Chip'
 import { StatTile } from '../../components/ui/StatTile'
-import { useAlimentosStatsEnRango, useParesInseparables } from '../foods/useFoodStats'
+import { useAlimentosStats, useParesInseparables, useResumenSemanal } from '../foods/useFoodStats'
+import { ResumenSemanalCard } from './ResumenSemanalCard'
 import { DivergingSentimentBar, LeyendaValoracion } from './DivergingSentimentBar'
 import { COLOR_VALORACION } from './chartTokens'
 
@@ -21,9 +22,14 @@ export function StatsPage() {
   const navigate = useNavigate()
   const [periodo, setPeriodo] = useState<Periodo>('semana')
   const desde = useMemo(() => inicioDePeriodo(periodo), [periodo])
-  const hasta = useMemo(() => new Date().toISOString(), [])
-  const { data: alimentos, isLoading } = useAlimentosStatsEnRango(desde, hasta)
-  const paresInseparables = useParesInseparables(desde, hasta)
+  // Las conclusiones usan TODO el historial, no el período elegido: llegar a 3
+  // registros del mismo ingrediente dentro de una semana casi nunca pasa, así
+  // que filtrar por fecha descartaba la evidencia acumulada y mostraba "0
+  // sospechosos" al lado de un resumen que sí anunciaba un hallazgo. El período
+  // ahora acota solo qué se considera "nuevo".
+  const { data: alimentos, isLoading } = useAlimentosStats()
+  const paresInseparables = useParesInseparables()
+  const resumen = useResumenSemanal(desde)
 
   const conRegistros = alimentos.filter((a) => a.conSensacion > 0)
   const sospechosos = alimentos.filter((a) => a.sospechoso)
@@ -49,6 +55,7 @@ export function StatsPage() {
       <PageHeader title="Patrones" />
 
       <div className="flex gap-2 px-4">
+        <span className="self-center text-xs text-slate-400">Novedades de:</span>
         <Chip
           label="Última semana"
           selected={periodo === 'semana'}
@@ -64,7 +71,7 @@ export function StatsPage() {
       ) : conRegistros.length === 0 ? (
         <div className="px-4 pt-4">
           <EmptyState
-            title="Todavía no hay datos para este período"
+            title="Todavía no hay datos suficientes"
             subtitle="Los patrones salen de comidas que tengan ingredientes cargados y una sensación registrada."
           />
         </div>
@@ -89,6 +96,8 @@ export function StatsPage() {
               detalle="siempre bien"
             />
           </div>
+
+          {resumen && <ResumenSemanalCard resumen={resumen} />}
 
           {sospechosos.length > 0 && (
             <Card>

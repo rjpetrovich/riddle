@@ -98,6 +98,69 @@ export function calcularStatsPorAlimento(
   return stats.sort((a, b) => b.vecesComido - a.vecesComido)
 }
 
+export const REGISTROS_PARA_CONCLUIR = UMBRAL_MIN_REGISTROS
+
+/**
+ * Cuántos registros más hacen falta para poder decir algo de este ingrediente.
+ *
+ * Es el motor del progreso: convierte "cargá datos" en "te falta uno para
+ * saber si el pollo te cae mal", que es una razón concreta para registrar.
+ */
+export function faltanParaConcluir(stats: AlimentoStats): number {
+  return Math.max(0, UMBRAL_MIN_REGISTROS - stats.conSensacion)
+}
+
+export interface ResumenSemanal {
+  /** Ingredientes que en este período llegaron al mínimo y antes no lo tenían. */
+  nuevosConDatos: string[]
+  nuevosSospechosos: string[]
+  nuevosSeguros: string[]
+  registrosNuevos: number
+  /** A cuántos ingredientes les falta un solo registro para concluir. */
+  aUnRegistro: string[]
+}
+
+/**
+ * Qué se aprendió en el período, comparando contra lo que se sabía antes.
+ *
+ * No cuenta actividad ("registraste 12 comidas") sino conocimiento ganado, que
+ * es lo que esta app promete y lo que vuelve valioso seguir registrando.
+ */
+export function resumenSemanal(
+  comidas: ComidaCruda[],
+  sensaciones: SensacionCruda[],
+  desdeISO: string,
+  nombrePorId: (id: string) => string,
+): ResumenSemanal {
+  const previas = comidas.filter((c) => c.fechaHora < desdeISO)
+  const statsAntes = new Map(
+    calcularStatsPorAlimento(previas, sensaciones).map((s) => [s.alimentoId, s]),
+  )
+  const statsAhora = calcularStatsPorAlimento(comidas, sensaciones)
+
+  const nuevosConDatos: string[] = []
+  const nuevosSospechosos: string[] = []
+  const nuevosSeguros: string[] = []
+  const aUnRegistro: string[] = []
+
+  for (const s of statsAhora) {
+    const antes = statsAntes.get(s.alimentoId)
+    const teniaDatos = (antes?.conSensacion ?? 0) >= UMBRAL_MIN_REGISTROS
+
+    if (s.conSensacion >= UMBRAL_MIN_REGISTROS && !teniaDatos) {
+      nuevosConDatos.push(nombrePorId(s.alimentoId))
+    }
+    if (s.sospechoso && !antes?.sospechoso) nuevosSospechosos.push(nombrePorId(s.alimentoId))
+    if (s.seguro && !antes?.seguro) nuevosSeguros.push(nombrePorId(s.alimentoId))
+    if (faltanParaConcluir(s) === 1) aUnRegistro.push(nombrePorId(s.alimentoId))
+  }
+
+  const idsEnPeriodo = new Set(comidas.filter((c) => c.fechaHora >= desdeISO).map((c) => c.id))
+  const registrosNuevos = sensaciones.filter((s) => idsEnPeriodo.has(s.comidaId)).length
+
+  return { nuevosConDatos, nuevosSospechosos, nuevosSeguros, registrosNuevos, aUnRegistro }
+}
+
 export interface ParInseparable {
   alimentoA: string
   alimentoB: string

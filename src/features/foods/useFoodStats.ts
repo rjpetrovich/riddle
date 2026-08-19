@@ -5,6 +5,7 @@ import {
   calcularStatsPorAlimento,
   detectarParesInseparables,
   ocurrenciasDeAlimento,
+  resumenSemanal,
   type AlimentoStats,
 } from '../stats/patternDetection'
 
@@ -29,32 +30,19 @@ export function useAlimentosStats(): { data: AlimentoStats[]; isLoading: boolean
   return { data: stats, isLoading }
 }
 
-export function useAlimentosStatsEnRango(
-  desdeISO: string,
-  hastaISO: string,
-): { data: AlimentoStats[]; isLoading: boolean } {
-  const { data, isLoading } = useDatosCrudos()
-  if (!data) return { data: [], isLoading }
-
-  const comidasEnRango = data.comidas.filter(
-    (c) => c.fechaHora >= desdeISO && c.fechaHora <= hastaISO,
+export function useResumenSemanal(desdeISO: string) {
+  const { data } = useDatosCrudos()
+  if (!data) return null
+  return resumenSemanal(data.comidas, data.sensaciones, desdeISO, (id) =>
+    data.nombresPorAlimentoId.get(id) ?? '',
   )
-  const stats = calcularStatsPorAlimento(comidasEnRango, data.sensaciones).map((s) => ({
-    ...s,
-    nombre: data.nombresPorAlimentoId.get(s.alimentoId) ?? '(sin nombre)',
-  }))
-
-  return { data: stats, isLoading }
 }
 
-export function useParesInseparables(desdeISO: string, hastaISO: string) {
+export function useParesInseparables() {
   const { data } = useDatosCrudos()
   if (!data) return []
 
-  const comidasEnRango = data.comidas.filter(
-    (c) => c.fechaHora >= desdeISO && c.fechaHora <= hastaISO,
-  )
-  return detectarParesInseparables(comidasEnRango, data.sensaciones).map((p) => ({
+  return detectarParesInseparables(data.comidas, data.sensaciones).map((p) => ({
     ...p,
     nombreA: data.nombresPorAlimentoId.get(p.alimentoA) ?? '',
     nombreB: data.nombresPorAlimentoId.get(p.alimentoB) ?? '',

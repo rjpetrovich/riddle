@@ -4,7 +4,7 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import { Spinner } from '../../components/ui/Spinner'
 import { Card } from '../../components/ui/Card'
 import { useAlimentosStats } from './useFoodStats'
-import type { AlimentoStats } from '../stats/patternDetection'
+import { faltanParaConcluir, type AlimentoStats } from '../stats/patternDetection'
 
 function colorDot(stats: AlimentoStats) {
   if (stats.conSensacion === 0) return 'bg-slate-300 dark:bg-slate-600'
@@ -53,10 +53,21 @@ export function FoodsListPage() {
                   </p>
                 </div>
               </div>
-              {a.sospechoso && (
-                <span className="rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700 dark:bg-red-500/15 dark:text-red-400">
+              {a.sospechoso ? (
+                <span className="shrink-0 rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700 dark:bg-red-500/15 dark:text-red-400">
                   posible sospechoso
                 </span>
+              ) : (
+                // Lo que falta para poder concluir algo. Es el progreso que
+                // vuelve concreto seguir registrando: no "cargá datos" sino
+                // "con uno más sabés si este te cae mal".
+                faltanParaConcluir(a) > 0 && (
+                  <span className="shrink-0 rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                    {faltanParaConcluir(a) === 1
+                      ? 'falta 1 para saber'
+                      : `faltan ${faltanParaConcluir(a)}`}
+                  </span>
+                )
               )}
             </Card>
           ))

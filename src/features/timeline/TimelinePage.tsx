@@ -42,6 +42,13 @@ export function TimelinePage() {
     [comidas, sensaciones, filtroTipoComida, filtroValoracion],
   )
 
+  // Se cuenta sobre TODAS las comidas del día, sin los filtros de la vista:
+  // es el progreso real del día, no el de lo que se está mostrando.
+  const totalComidas = comidas.length
+  const conSensacion = comidas.filter((c) =>
+    sensaciones.some((s) => s.comidaId === c.id),
+  ).length
+
   const cargando = cargandoComidas || cargandoSensaciones
 
   return (
@@ -82,6 +89,28 @@ export function TimelinePage() {
           </button>
         )}
       </div>
+
+      {/* Progreso de lo que realmente hace falta para detectar patrones: no
+          cuántas comidas cargaste, sino cuántas tienen su sensación anotada. */}
+      {totalComidas > 0 && (
+        <div className="mt-2 px-4">
+          <div className="flex items-center justify-between gap-3 text-xs">
+            <span className="text-slate-500 dark:text-slate-400">
+              {conSensacion === totalComidas
+                ? '✅ Todas las comidas del día tienen su sensación'
+                : `${conSensacion} de ${totalComidas} comidas con sensación registrada`}
+            </span>
+          </div>
+          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+            <div
+              className={`h-full rounded-full transition-all ${
+                conSensacion === totalComidas ? 'bg-emerald-500' : 'bg-sky-500'
+              }`}
+              style={{ width: `${(conSensacion / totalComidas) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Los contadores son del día que se está mirando, así que van debajo de
           su encabezado y no del calendario. */}
