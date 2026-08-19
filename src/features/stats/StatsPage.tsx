@@ -54,7 +54,7 @@ export function StatsPage() {
               Posibles sospechosos
             </h2>
             <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
-              Alimentos con al menos 3 registros y más del 60% asociados a "mal".
+              Ingredientes con al menos 3 registros y más del 60% asociados a "mal".
             </p>
             {sospechosos.length === 0 ? (
               <p className="text-sm text-slate-400">Ninguno por ahora, buena señal.</p>
@@ -63,7 +63,7 @@ export function StatsPage() {
                 {sospechosos.map((a) => (
                   <li
                     key={a.alimentoId}
-                    onClick={() => navigate(`/alimentos/${a.alimentoId}`)}
+                    onClick={() => navigate(`/ingredientes/${a.alimentoId}`)}
                     className="flex cursor-pointer items-center justify-between rounded-lg bg-red-50 px-3 py-2 text-sm dark:bg-red-500/10"
                   >
                     <span className="text-red-800 dark:text-red-300">{a.nombre}</span>
@@ -77,7 +77,7 @@ export function StatsPage() {
           </Card>
 
           <Card>
-            <h2 className="mb-1 font-medium text-slate-900 dark:text-slate-100">Alimentos seguros</h2>
+            <h2 className="mb-1 font-medium text-slate-900 dark:text-slate-100">Ingredientes seguros</h2>
             <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
               Al menos 3 registros y siempre asociados a "bien".
             </p>
@@ -88,7 +88,7 @@ export function StatsPage() {
                 {seguros.map((a) => (
                   <li
                     key={a.alimentoId}
-                    onClick={() => navigate(`/alimentos/${a.alimentoId}`)}
+                    onClick={() => navigate(`/ingredientes/${a.alimentoId}`)}
                     className="flex cursor-pointer items-center justify-between rounded-lg bg-emerald-50 px-3 py-2 text-sm dark:bg-emerald-500/10"
                   >
                     <span className="text-emerald-800 dark:text-emerald-300">{a.nombre}</span>
@@ -104,7 +104,7 @@ export function StatsPage() {
           {chartData.length > 0 && (
             <Card>
               <h2 className="mb-3 font-medium text-slate-900 dark:text-slate-100">
-                Sensaciones por alimento (top 8)
+                Sensaciones por ingrediente (top 8)
               </h2>
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">

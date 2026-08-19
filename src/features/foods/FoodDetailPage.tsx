@@ -21,10 +21,10 @@ export function FoodDetailPage() {
 
   return (
     <div className="pb-24">
-      <PageHeader title={nombre || 'Alimento'} />
+      <PageHeader title={nombre || 'Ingrediente'} />
       <div className="flex flex-col gap-3 px-4">
         {ocurrencias.length === 0 ? (
-          <EmptyState title="No hay registros para este alimento" />
+          <EmptyState title="No hay registros para este ingrediente" />
         ) : (
           ocurrencias.map((o) => (
             <Card key={o.comidaId}>

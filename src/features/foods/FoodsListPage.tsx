@@ -19,7 +19,7 @@ export function FoodsListPage() {
 
   return (
     <div className="pb-24">
-      <PageHeader title="Alimentos" />
+      <PageHeader title="Ingredientes" />
       <div className="flex flex-col gap-2 px-4">
         {isLoading ? (
           <div className="flex justify-center py-10">
@@ -27,15 +27,15 @@ export function FoodsListPage() {
           </div>
         ) : alimentos.length === 0 ? (
           <EmptyState
-            title="Todavía no registraste alimentos"
-            subtitle="Los alimentos salen del campo Ingredientes de cada comida. Si cargaste comidas sin ingredientes, editalas y agregalos para empezar a ver patrones."
+            title="Todavía no registraste ingredientes"
+            subtitle="Salen del campo Ingredientes de cada comida. Si cargaste comidas sin completarlo, editalas y agregalos para empezar a ver patrones."
           />
         ) : (
           alimentos.map((a) => (
             <Card
               key={a.alimentoId}
               className="flex cursor-pointer items-center justify-between gap-3"
-              onClick={() => navigate(`/alimentos/${a.alimentoId}`)}
+              onClick={() => navigate(`/ingredientes/${a.alimentoId}`)}
             >
               <div className="flex items-center gap-3">
                 <span className={`h-2.5 w-2.5 flex-none rounded-full ${colorDot(a)}`} />

@@ -1,8 +1,10 @@
 import { NavLink } from 'react-router-dom'
 
 const items = [
-  { to: '/', label: 'Hoy', icon: '📅' },
-  { to: '/alimentos', label: 'Alimentos', icon: '🥗' },
+  { to: '/', label: 'Comidas', icon: '📅' },
+  // "Ingredientes" y no "Alimentos": es el mismo nombre que el campo del
+  // formulario de donde salen, así queda claro qué alimenta esta pantalla.
+  { to: '/ingredientes', label: 'Ingredientes', icon: '🥗' },
   { to: '/estadisticas', label: 'Patrones', icon: '📊' },
   { to: '/ajustes', label: 'Ajustes', icon: '⚙️' },
 ]

@@ -38,8 +38,8 @@ export function AppRouter() {
         <Route path="/comida/:id/editar" element={<AddMealPage />} />
         <Route path="/sensacion/nueva" element={<AddFeelingPage />} />
         <Route path="/sensacion/:id/editar" element={<AddFeelingPage />} />
-        <Route path="/alimentos" element={<FoodsListPage />} />
-        <Route path="/alimentos/:id" element={<FoodDetailPage />} />
+        <Route path="/ingredientes" element={<FoodsListPage />} />
+        <Route path="/ingredientes/:id" element={<FoodDetailPage />} />
         <Route path="/estadisticas" element={<StatsPage />} />
         <Route path="/ajustes" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
