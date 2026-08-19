@@ -5,7 +5,10 @@
 -- adelante hiciera falta cruzar la hora exacta con las comidas, habría que
 -- pasar a registrar eventos con timestamp.
 --
--- Idempotente: se puede correr más de una vez sin romper nada.
+-- Deliberadamente corto y sin dependencias de migraciones anteriores (no usa
+-- el trigger de updated_at ni funciones previas): se pega a mano en el editor
+-- SQL, y cuanto más largo el bloque, más chance de que una copia se corte por
+-- la mitad sin que se note.
 
 create table if not exists contadores_dia (
   id uuid primary key default gen_random_uuid(),
@@ -13,17 +16,11 @@ create table if not exists contadores_dia (
   fecha date not null,
   vasos_agua smallint not null default 0 check (vasos_agua >= 0),
   idas_bano smallint not null default 0 check (idas_bano >= 0),
-  updated_at timestamptz not null default now(),
   unique (usuario_id, fecha)
 );
 
 create index if not exists contadores_dia_usuario_fecha_idx
   on contadores_dia (usuario_id, fecha desc);
-
-drop trigger if exists contadores_dia_set_updated_at on contadores_dia;
-create trigger contadores_dia_set_updated_at
-  before update on contadores_dia
-  for each row execute function set_updated_at();
 
 -- Contar idas al baño es opcional: se activa desde Ajustes.
 alter table profiles add column if not exists contar_bano boolean not null default false;
