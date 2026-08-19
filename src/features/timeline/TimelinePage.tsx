@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { Spinner } from '../../components/ui/Spinner'
@@ -28,7 +27,6 @@ type Item =
   | { tipo: 'sensacion'; fechaHora: string; data: import('../../types/domain').Sensacion }
 
 export function TimelinePage() {
-  const navigate = useNavigate()
   const [fecha, setFecha] = useState(new Date())
   const [filtroTipoComida, setFiltroTipoComida] = useState<TipoComida | ''>('')
   const [filtroValoracion, setFiltroValoracion] = useState<Valoracion | ''>('')
@@ -111,19 +109,7 @@ export function TimelinePage() {
 
   return (
     <div className="pb-24">
-      <PageHeader
-        title="Cómo Me Cae"
-        action={
-          // Las sensaciones de una comida se cargan desde su tarjeta; esto es
-          // para las que no dependen de haber comido (sueño, ánimo, energía).
-          <button
-            onClick={() => navigate('/sensacion/nueva')}
-            className="rounded-full border border-slate-200 px-3 py-1.5 text-sm text-slate-600 transition-colors hover:border-emerald-500 hover:text-emerald-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-emerald-500 dark:hover:text-emerald-400"
-          >
-            🙂 Cómo me siento
-          </button>
-        }
-      />
+      <PageHeader title="Cómo Me Cae" />
 
       <div className="flex items-center justify-between px-4">
         <button
