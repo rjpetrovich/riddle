@@ -41,7 +41,7 @@ export function useActualizarComida() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, input }: { id: string; input: Omit<ComidaInput, 'foto'> }) =>
+    mutationFn: ({ id, input }: { id: string; input: ComidaInput }) =>
       actualizarComida(id, user!.id, input),
     onSuccess: () => invalidarDatosDeRegistro(queryClient),
   })

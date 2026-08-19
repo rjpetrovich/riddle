@@ -102,11 +102,11 @@ export async function crearComida(usuarioId: string, input: ComidaInput): Promis
   return mapComida({ ...comida, foto_url: fotoUrl }, input.ingredientes)
 }
 
-export async function actualizarComida(
-  comidaId: string,
-  usuarioId: string,
-  input: Omit<ComidaInput, 'foto'>,
-) {
+export async function actualizarComida(comidaId: string, usuarioId: string, input: ComidaInput) {
+  // La foto es opcional al editar: solo se reemplaza si se eligió una nueva,
+  // así guardar sin tocarla no borra la que ya estaba.
+  const fotoUrl = input.foto ? await subirFotoComida(usuarioId, comidaId, input.foto) : undefined
+
   const { error } = await supabase
     .from('comidas')
     .update({
@@ -114,6 +114,7 @@ export async function actualizarComida(
       tipo_comida: input.tipoComida,
       nombre: input.nombre,
       notas: input.notas || null,
+      ...(fotoUrl ? { foto_url: fotoUrl } : {}),
     })
     .eq('id', comidaId)
   if (error) throw error

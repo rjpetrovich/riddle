@@ -49,6 +49,7 @@ export function AddMealPage() {
             tipoComida,
             ingredientes: ingredientesFinal,
             notas,
+            foto,
           },
         })
       } else {
@@ -116,20 +117,25 @@ export function AddMealPage() {
 
         <IngredientesInput ref={ingredientesRef} value={ingredientes} onChange={setIngredientes} />
 
-        {!esEdicion && (
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              Foto (opcional)
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={(e) => setFoto(e.target.files?.[0] ?? null)}
-              className="text-sm text-slate-600 dark:text-slate-400"
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            {esEdicion ? 'Cambiar foto (opcional)' : 'Foto (opcional)'}
+          </label>
+          {esEdicion && comidaExistente?.fotoUrl && !foto && (
+            <img
+              src={comidaExistente.fotoUrl}
+              alt="Foto actual"
+              className="mb-1 h-20 w-20 rounded-xl object-cover"
             />
-          </div>
-        )}
+          )}
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={(e) => setFoto(e.target.files?.[0] ?? null)}
+            className="text-sm text-slate-600 dark:text-slate-400"
+          />
+        </div>
 
         <TextArea
           label="Notas (opcional)"
