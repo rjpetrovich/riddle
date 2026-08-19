@@ -4,6 +4,8 @@ App para registrar lo que comés y cómo te hace sentir, con el objetivo de dete
 
 PWA instalable (funciona bien desde el celular, "agregar a inicio"), con modo oscuro y pensada para registrar algo en menos de 15 segundos.
 
+**App en producción**: https://riddle-sand-nu.vercel.app
+
 ## Stack
 
 - **Frontend**: React + TypeScript + Vite, Tailwind CSS v4.
