@@ -1,25 +1,38 @@
 import { supabase } from '../../lib/supabaseClient'
 import { claveDiaLocal } from '../../lib/dateUtils'
 
+/**
+ * El registro del día: los contadores y las observaciones libres. Viven en la
+ * misma fila (una por usuario y día), así que se leen y escriben juntos.
+ */
 export interface ContadoresDia {
   vasosAgua: number
   idasBano: number
+  observaciones: string
 }
 
-export const CONTADORES_VACIOS: ContadoresDia = { vasosAgua: 0, idasBano: 0 }
+export const CONTADORES_VACIOS: ContadoresDia = {
+  vasosAgua: 0,
+  idasBano: 0,
+  observaciones: '',
+}
 
 export type TipoContador = 'vasosAgua' | 'idasBano'
 
 export async function fetchContadores(usuarioId: string, dia: Date): Promise<ContadoresDia> {
   const { data, error } = await supabase
     .from('contadores_dia')
-    .select('vasos_agua, idas_bano')
+    .select('vasos_agua, idas_bano, observaciones')
     .eq('usuario_id', usuarioId)
     .eq('fecha', claveDiaLocal(dia))
     .maybeSingle()
   if (error) throw error
   if (!data) return CONTADORES_VACIOS
-  return { vasosAgua: data.vasos_agua, idasBano: data.idas_bano }
+  return {
+    vasosAgua: data.vasos_agua,
+    idasBano: data.idas_bano,
+    observaciones: data.observaciones ?? '',
+  }
 }
 
 /**
@@ -45,6 +58,7 @@ export async function guardarContadores(
       fecha: claveDiaLocal(dia),
       vasos_agua: limpio(contadores.vasosAgua),
       idas_bano: limpio(contadores.idasBano),
+      observaciones: contadores.observaciones.trim() || null,
     },
     { onConflict: 'usuario_id,fecha' },
   )

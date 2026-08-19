@@ -28,7 +28,7 @@ export async function exportarHistorialCsv(usuarioId: string) {
       .order('fecha_hora'),
     supabase
       .from('contadores_dia')
-      .select('fecha, vasos_agua, idas_bano')
+      .select('fecha, vasos_agua, idas_bano, observaciones')
       .eq('usuario_id', usuarioId)
       .order('fecha'),
   ])
@@ -75,7 +75,13 @@ export async function exportarHistorialCsv(usuarioId: string) {
       ingredientes_o_sintomas: '',
       valoracion: '',
       intensidad: '',
-      notas: `vasos de agua: ${c.vasos_agua}; idas al baño: ${c.idas_bano}`,
+      notas: [
+        `vasos de agua: ${c.vasos_agua}`,
+        `idas al baño: ${c.idas_bano}`,
+        c.observaciones ? `observaciones: ${c.observaciones}` : null,
+      ]
+        .filter(Boolean)
+        .join('; '),
     })),
   ].sort((a, b) => (a.fecha_hora < b.fecha_hora ? -1 : 1))
 

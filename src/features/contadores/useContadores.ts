@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../auth/AuthProvider'
 import { claveDiaLocal } from '../../lib/dateUtils'
@@ -14,9 +15,14 @@ import {
 export function useContadores(dia: Date) {
   const { user } = useAuth()
   const queryClient = useQueryClient()
-  const clave = ['contadores', user?.id, claveDiaLocal(dia)]
+  const claveDia = claveDiaLocal(dia)
+  const clave = ['contadores', user?.id, claveDia]
 
-  const { data = CONTADORES_VACIOS, error: errorLectura } = useQuery({
+  const {
+    data = CONTADORES_VACIOS,
+    error: errorLectura,
+    isSuccess: cargado,
+  } = useQuery({
     queryKey: clave,
     queryFn: () => fetchContadores(user!.id, dia),
     enabled: !!user,
@@ -42,14 +48,58 @@ export function useContadores(dia: Date) {
     },
   })
 
+  const temporizador = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendiente = useRef<ContadoresDia | null>(null)
+
+  // Al cambiar de día o salir de la pantalla puede haber texto escrito que
+  // todavía no se guardó. Descartarlo perdería lo último tipeado sin aviso, así
+  // que se guarda en el acto, contra el día al que pertenece (el de este
+  // render, no el nuevo).
+  const usuarioId = user?.id
+  useEffect(() => {
+    return () => {
+      if (temporizador.current) clearTimeout(temporizador.current)
+      if (pendiente.current && usuarioId) {
+        guardarContadores(usuarioId, dia, pendiente.current).catch(() => {
+          // Sin interfaz donde mostrarlo: el componente ya se desmontó.
+        })
+        pendiente.current = null
+      }
+    }
+    // claveDia y no el objeto Date: cambia solo cuando cambia el día mirado.
+  }, [usuarioId, claveDia]) // eslint-disable-line react-hooks/exhaustive-deps
+
   function ajustar(tipo: TipoContador, delta: number) {
     const nuevos: ContadoresDia = { ...data, [tipo]: Math.max(0, data[tipo] + delta) }
     mutacion.mutate(nuevos)
   }
 
+  // Las observaciones se escriben letra por letra: guardar en cada tecla sería
+  // una petición por carácter. Se espera a que la escritura se detenga.
+  function escribirObservaciones(texto: string) {
+    // A propósito no se toca la caché acá: si el textarea tomara su valor del
+    // dato remoto, cada tecla esperaría un re-render y al escribir rápido React
+    // devolvería el campo al valor viejo, comiéndose caracteres. El texto que se
+    // ve lo maneja el componente con estado local; esto solo agenda el guardado.
+    if (temporizador.current) clearTimeout(temporizador.current)
+    pendiente.current = { ...data, observaciones: texto }
+    temporizador.current = setTimeout(() => {
+      const aGuardar = pendiente.current
+      pendiente.current = null
+      if (aGuardar) mutacion.mutate(aGuardar)
+    }, 800)
+  }
+
   // Si la lectura falla, el contador mostraría 0 como si no hubiera nada
   // registrado, ocultando el problema. Se expone junto al de guardado.
-  return { contadores: data, ajustar, error: mutacion.error ?? errorLectura }
+  return {
+    contadores: data,
+    cargado,
+    ajustar,
+    escribirObservaciones,
+    guardando: mutacion.isPending,
+    error: mutacion.error ?? errorLectura,
+  }
 }
 
 export function useContarBano() {

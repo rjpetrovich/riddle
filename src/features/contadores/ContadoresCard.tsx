@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { Card } from '../../components/ui/Card'
+import { claveDiaLocal } from '../../lib/dateUtils'
 import { mensajeDeError } from '../../lib/mensajeDeError'
 import { useContadores, useContarBano } from './useContadores'
 import type { TipoContador } from './contadoresApi'
@@ -53,8 +55,51 @@ function Fila({
   )
 }
 
+/**
+ * El texto vive en estado local y no en la caché remota.
+ *
+ * Si el valor del textarea viniera del dato del servidor, cada tecla tendría
+ * que esperar un re-render y al escribir rápido React lo devolvería al valor
+ * anterior, perdiendo caracteres. Acá se escribe fluido y el guardado va aparte.
+ */
+function Observaciones({
+  inicial,
+  onEscribir,
+  guardando,
+}: {
+  inicial: string
+  onEscribir: (texto: string) => void
+  guardando: boolean
+}) {
+  const [texto, setTexto] = useState(inicial)
+
+  return (
+    <div className="flex flex-col gap-1 border-t border-slate-100 pt-3 dark:border-slate-800">
+      <label
+        htmlFor="observaciones-dia"
+        className="flex items-center justify-between text-sm font-medium text-slate-700 dark:text-slate-300"
+      >
+        <span>📝 Observaciones del día</span>
+        {guardando && <span className="text-xs font-normal text-slate-400">guardando…</span>}
+      </label>
+      <textarea
+        id="observaciones-dia"
+        value={texto}
+        onChange={(e) => {
+          setTexto(e.target.value)
+          onEscribir(e.target.value)
+        }}
+        rows={2}
+        placeholder="cómo dormiste, estrés, medicación, lo que quieras recordar..."
+        className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+      />
+    </div>
+  )
+}
+
 export function ContadoresCard({ dia }: { dia: Date }) {
-  const { contadores, ajustar, error } = useContadores(dia)
+  const { contadores, cargado, ajustar, escribirObservaciones, guardando, error } =
+    useContadores(dia)
   const { activo: contarBano } = useContarBano()
 
   const filas: { tipo: TipoContador; icono: string; etiqueta: string }[] = [
@@ -75,6 +120,18 @@ export function ContadoresCard({ dia }: { dia: Date }) {
           onAjustar={(delta) => ajustar(f.tipo, delta)}
         />
       ))}
+      {/* Se monta recién con el dato cargado: el texto inicial se toma una sola
+          vez, así que montarlo antes dejaría el campo vacío en un día que sí
+          tiene observaciones. La key por día lo reinicia al cambiar de fecha. */}
+      {cargado && (
+        <Observaciones
+          key={claveDiaLocal(dia)}
+          inicial={contadores.observaciones}
+          onEscribir={escribirObservaciones}
+          guardando={guardando}
+        />
+      )}
+
       {error && (
         // Se muestra el mensaje real y no uno genérico: decir "revisá la
         // conexión" ante cualquier fallo manda a buscar el problema donde no
