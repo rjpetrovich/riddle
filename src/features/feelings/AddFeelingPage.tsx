@@ -1,5 +1,5 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { TextArea } from '../../components/ui/TextArea'
@@ -15,6 +15,7 @@ import {
   useSensacionPorId,
   useSintomas,
 } from './useFeelings'
+import { useComidaPorId } from '../meals/useMeals'
 
 const toneByValoracion: Record<Valoracion, 'bien' | 'neutro' | 'mal'> = {
   bien: 'bien',
@@ -25,6 +26,7 @@ const toneByValoracion: Record<Valoracion, 'bien' | 'neutro' | 'mal'> = {
 export function AddFeelingPage() {
   const navigate = useNavigate()
   const { id } = useParams()
+  const [searchParams] = useSearchParams()
   const esEdicion = !!id
   const { data: sensacionExistente, isLoading: cargandoSensacion } = useSensacionPorId(id)
   const { data: sintomas = [] } = useSintomas()
@@ -33,11 +35,14 @@ export function AddFeelingPage() {
   const actualizarSensacion = useActualizarSensacion()
 
   const [fechaHora, setFechaHora] = useState(nowLocalInputValue())
-  const [comidaId, setComidaId] = useState<string | null>(null)
+  // Al entrar desde "¿Cómo te cayó?" en una comida, viene preseleccionada.
+  const [comidaId, setComidaId] = useState<string | null>(() => searchParams.get('comida'))
   const [valoracion, setValoracion] = useState<Valoracion>('bien')
   const [sintomaIds, setSintomaIds] = useState<string[]>([])
   const [intensidad, setIntensidad] = useState<number | null>(null)
   const [notas, setNotas] = useState('')
+
+  const { data: comidaAsociada } = useComidaPorId(comidaId ?? undefined)
 
   useEffect(() => {
     if (!sensacionExistente) return
@@ -48,6 +53,18 @@ export function AddFeelingPage() {
     setIntensidad(sensacionExistente.intensidad)
     setNotas(sensacionExistente.notas ?? '')
   }, [sensacionExistente])
+
+  // La lista de recientes cubre las últimas horas; si la sensación quedó
+  // asociada a una comida más vieja (al editar, o al venir desde "¿Cómo te
+  // cayó?" de una comida de la mañana), la agregamos para no perder el vínculo.
+  const opcionesComida = useMemo(() => {
+    if (!comidaId || comidasRecientes.some((c) => c.id === comidaId)) return comidasRecientes
+    if (!comidaAsociada) return comidasRecientes
+    return [
+      { id: comidaAsociada.id, nombre: comidaAsociada.nombre, fecha_hora: comidaAsociada.fechaHora },
+      ...comidasRecientes,
+    ]
+  }, [comidaId, comidasRecientes, comidaAsociada])
 
   function toggleSintoma(sid: string) {
     setSintomaIds((prev) => (prev.includes(sid) ? prev.filter((s) => s !== sid) : [...prev, sid]))
@@ -114,7 +131,7 @@ export function AddFeelingPage() {
           required
         />
 
-        {comidasRecientes.length > 0 && (
+        {opcionesComida.length > 0 && (
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
               ¿Asociado a alguna comida reciente?
@@ -125,7 +142,7 @@ export function AddFeelingPage() {
               className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base text-slate-900 outline-none focus:border-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
             >
               <option value="">No, es independiente</option>
-              {comidasRecientes.map((c) => (
+              {opcionesComida.map((c) => (
                 <option key={c.id} value={c.id}>
                   {formatHora(c.fecha_hora)} · {c.nombre}
                 </option>

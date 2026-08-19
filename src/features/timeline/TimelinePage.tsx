@@ -17,7 +17,12 @@ function startEndOfDay(date: Date) {
 }
 
 type Item =
-  | { tipo: 'comida'; fechaHora: string; data: import('../../types/domain').Comida }
+  | {
+      tipo: 'comida'
+      fechaHora: string
+      data: import('../../types/domain').Comida
+      sensaciones: import('../../types/domain').Sensacion[]
+    }
   | { tipo: 'sensacion'; fechaHora: string; data: import('../../types/domain').Sensacion }
 
 export function TimelinePage() {
@@ -40,9 +45,32 @@ export function TimelinePage() {
       ? sensaciones.filter((s) => s.valoracion === filtroValoracion)
       : sensaciones
 
+    // Las sensaciones asociadas a una comida se muestran dentro de su tarjeta.
+    // Las independientes —y las que apuntan a una comida de otro día, que no
+    // está en esta vista— van sueltas para que no desaparezcan del historial.
+    const idsComidasVisibles = new Set(comidasFiltradas.map((c) => c.id))
+    const sensacionesPorComida = new Map<string, typeof sensacionesFiltradas>()
+    const sensacionesSueltas: typeof sensacionesFiltradas = []
+
+    for (const s of sensacionesFiltradas) {
+      if (s.comidaId && idsComidasVisibles.has(s.comidaId)) {
+        const previas = sensacionesPorComida.get(s.comidaId) ?? []
+        sensacionesPorComida.set(s.comidaId, [...previas, s])
+      } else {
+        sensacionesSueltas.push(s)
+      }
+    }
+
     const todos: Item[] = [
-      ...comidasFiltradas.map((c) => ({ tipo: 'comida' as const, fechaHora: c.fechaHora, data: c })),
-      ...sensacionesFiltradas.map((s) => ({
+      ...comidasFiltradas.map((c) => ({
+        tipo: 'comida' as const,
+        fechaHora: c.fechaHora,
+        data: c,
+        sensaciones: (sensacionesPorComida.get(c.id) ?? []).sort((a, b) =>
+          a.fechaHora < b.fechaHora ? -1 : 1,
+        ),
+      })),
+      ...sensacionesSueltas.map((s) => ({
         tipo: 'sensacion' as const,
         fechaHora: s.fechaHora,
         data: s,
@@ -126,7 +154,10 @@ export function TimelinePage() {
               <ComidaCard
                 key={`comida-${item.data.id}`}
                 comida={item.data}
+                sensaciones={item.sensaciones}
+                sintomas={sintomas}
                 onEliminar={(id) => eliminarComida.mutate(id)}
+                onEliminarSensacion={(id) => eliminarSensacion.mutate(id)}
               />
             ) : (
               <SensacionCard
