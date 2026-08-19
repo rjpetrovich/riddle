@@ -35,3 +35,28 @@ export function claveDiaLocal(fecha: Date | string): string {
   const dia = String(d.getDate()).padStart(2, '0')
   return `${d.getFullYear()}-${mes}-${dia}`
 }
+
+/**
+ * Devuelve el Date del mediodía de una clave YYYY-MM-DD, o null si no es válida.
+ *
+ * Se usa el mediodía y no la medianoche para que un cambio de horario de verano
+ * no corra el día hacia atrás. Rechaza fechas que no existen (2025-02-31), que
+ * el constructor de Date convertiría en silencio al mes siguiente.
+ */
+export function diaDesdeClave(clave: string | null | undefined): Date | null {
+  if (!clave || !/^\d{4}-\d{2}-\d{2}$/.test(clave)) return null
+  const [anio, mes, dia] = clave.split('-').map(Number)
+  const d = new Date(anio, mes - 1, dia, 12, 0, 0, 0)
+  if (d.getFullYear() !== anio || d.getMonth() !== mes - 1 || d.getDate() !== dia) return null
+  return d
+}
+
+/**
+ * Valor para <input type="datetime-local"> ubicado en el día que se pide, con
+ * la hora actual. Así, al agregar una comida desde un día ya elegido en el
+ * calendario, solo queda ajustar la hora. Sin clave válida, cae en "ahora".
+ */
+export function inputValueParaDia(clave: string | null | undefined): string {
+  const ahora = nowLocalInputValue()
+  return diaDesdeClave(clave) ? `${clave}T${ahora.slice(11, 16)}` : ahora
+}

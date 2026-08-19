@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { Spinner } from '../../components/ui/Spinner'
@@ -10,7 +11,7 @@ import { agruparTimeline } from './agruparTimeline'
 import { CalendarioMes } from './CalendarioMes'
 import { mismoDia } from './calendario'
 import { ContadoresCard } from '../contadores/ContadoresCard'
-import { formatFechaCorta } from '../../lib/dateUtils'
+import { claveDiaLocal, diaDesdeClave, formatFechaCorta } from '../../lib/dateUtils'
 import { TIPOS_COMIDA, type TipoComida, type Valoracion } from '../../types/domain'
 
 function startEndOfDay(date: Date) {
@@ -22,11 +23,25 @@ function startEndOfDay(date: Date) {
 }
 
 export function TimelinePage() {
-  const [fecha, setFecha] = useState(new Date())
+  // El día elegido vive en la URL (?dia=YYYY-MM-DD) y no en un useState: así lo
+  // puede leer también el botón + para abrir la comida nueva ya ubicada en ese
+  // día, y el día sobrevive a ir y volver del formulario.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const claveDia = searchParams.get('dia')
+  const fecha = useMemo(() => diaDesdeClave(claveDia) ?? new Date(), [claveDia])
   const [mes, setMes] = useState(() => {
-    const hoy = new Date()
-    return new Date(hoy.getFullYear(), hoy.getMonth(), 1)
+    const inicial = diaDesdeClave(claveDia) ?? new Date()
+    return new Date(inicial.getFullYear(), inicial.getMonth(), 1)
   })
+
+  function seleccionarDia(d: Date) {
+    const params = new URLSearchParams(searchParams)
+    // Hoy es el valor por defecto, no hace falta ensuciar la URL con él.
+    if (mismoDia(d, new Date())) params.delete('dia')
+    else params.set('dia', claveDiaLocal(d))
+    // replace para que el botón de atrás no recorra cada día que se tocó.
+    setSearchParams(params, { replace: true })
+  }
   const [filtroTipoComida, setFiltroTipoComida] = useState<TipoComida | ''>('')
   const [filtroValoracion, setFiltroValoracion] = useState<Valoracion | ''>('')
 
@@ -65,7 +80,7 @@ export function TimelinePage() {
         mes={mes}
         diaSeleccionado={fecha}
         onSeleccionarDia={(d) => {
-          setFecha(d)
+          seleccionarDia(d)
           // Tocar un día del mes vecino mueve también la vista del mes.
           if (d.getMonth() !== mes.getMonth()) setMes(new Date(d.getFullYear(), d.getMonth(), 1))
         }}
@@ -80,7 +95,7 @@ export function TimelinePage() {
           <button
             onClick={() => {
               const hoy = new Date()
-              setFecha(hoy)
+              seleccionarDia(hoy)
               setMes(new Date(hoy.getFullYear(), hoy.getMonth(), 1))
             }}
             className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 dark:border-slate-700 dark:text-slate-300"

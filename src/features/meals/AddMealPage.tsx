@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { TextArea } from '../../components/ui/TextArea'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Spinner } from '../../components/ui/Spinner'
-import { nowLocalInputValue } from '../../lib/dateUtils'
+import { diaDesdeClave, formatFechaCorta, inputValueParaDia } from '../../lib/dateUtils'
 import { TIPOS_COMIDA, type TipoComida } from '../../types/domain'
 import { IngredientesInput, type IngredientesInputHandle } from './IngredientesInput'
 import { useActualizarComida, useComidaPorId, useCrearComida } from './useMeals'
@@ -13,13 +13,16 @@ import { useActualizarComida, useComidaPorId, useCrearComida } from './useMeals'
 export function AddMealPage() {
   const navigate = useNavigate()
   const { id } = useParams()
+  const [searchParams] = useSearchParams()
+  // Día que venía seleccionado en el calendario. Sin él, se usa hoy.
+  const diaSeleccionado = searchParams.get('dia')
   const esEdicion = !!id
   const { data: comidaExistente, isLoading: cargandoComida } = useComidaPorId(id)
   const crearComida = useCrearComida()
   const actualizarComida = useActualizarComida()
 
   const [nombre, setNombre] = useState('')
-  const [fechaHora, setFechaHora] = useState(nowLocalInputValue())
+  const [fechaHora, setFechaHora] = useState(() => inputValueParaDia(diaSeleccionado))
   const [tipoComida, setTipoComida] = useState<TipoComida>('almuerzo')
   const [ingredientes, setIngredientes] = useState<string[]>([])
   const [notas, setNotas] = useState('')
@@ -62,7 +65,8 @@ export function AddMealPage() {
           foto,
         })
       }
-      navigate('/')
+      // Vuelve al mismo día que se estaba mirando, no a hoy.
+      navigate(diaSeleccionado ? `/?dia=${diaSeleccionado}` : '/')
     } catch {
       // el error ya queda expuesto vía crearComida.error / actualizarComida.error
     }
@@ -114,6 +118,18 @@ export function AddMealPage() {
             </select>
           </div>
         </div>
+
+        {/* Cargar una comida de otro día es fácil de hacer sin darse cuenta,
+            así que el día queda dicho con todas las letras. */}
+        {!esEdicion && diaSeleccionado && (
+          <p className="-mt-2 text-xs text-slate-500 dark:text-slate-400">
+            Estás agregando una comida del{' '}
+            <span className="font-medium text-slate-700 dark:text-slate-200">
+              {formatFechaCorta(diaDesdeClave(diaSeleccionado)!.toISOString()).toLowerCase()}
+            </span>
+            . Ajustá la hora si hace falta.
+          </p>
+        )}
 
         <IngredientesInput ref={ingredientesRef} value={ingredientes} onChange={setIngredientes} />
 

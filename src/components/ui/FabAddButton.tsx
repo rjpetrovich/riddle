@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 /**
  * Se esconde al bajar y reaparece al subir.
@@ -11,6 +11,10 @@ import { useNavigate } from 'react-router-dom'
  */
 export function FabAddButton() {
   const navigate = useNavigate()
+  // Si en el calendario hay un día distinto de hoy seleccionado, la comida
+  // nueva arranca ubicada en ese día en lugar de en el de hoy.
+  const [searchParams] = useSearchParams()
+  const dia = searchParams.get('dia')
   const [visible, setVisible] = useState(true)
   const ultimoScroll = useRef(0)
 
@@ -30,7 +34,7 @@ export function FabAddButton() {
 
   return (
     <button
-      onClick={() => navigate('/comida/nueva')}
+      onClick={() => navigate(dia ? `/comida/nueva?dia=${dia}` : '/comida/nueva')}
       aria-label="Agregar comida"
       aria-hidden={!visible}
       tabIndex={visible ? 0 : -1}
