@@ -23,7 +23,12 @@ function normalizar(nombre: string) {
 export const IngredientesInput = forwardRef<IngredientesInputHandle, Props>(
   function IngredientesInput({ value, onChange }, ref) {
     const [texto, setTexto] = useState('')
-    const sugerencias = useFoodAutocomplete(texto).filter((s) => !value.includes(s.nombre))
+    // Comparar sin distinguir mayúsculas, igual que agregar(): si no, se
+    // ofrecería "Tomate" teniendo ya "tomate" y el toque no haría nada.
+    const yaElegidos = new Set(value.map((v) => v.toLowerCase()))
+    const sugerencias = useFoodAutocomplete(texto).filter(
+      (s) => !yaElegidos.has(s.nombre.toLowerCase()),
+    )
 
     function conPendiente(): string[] {
       const limpio = normalizar(texto)

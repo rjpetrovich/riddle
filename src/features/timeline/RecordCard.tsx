@@ -54,12 +54,16 @@ function DetalleSensacion({
 export function ComidaCard({
   comida,
   sensaciones,
+  tieneSensaciones,
   sintomas,
   onEliminar,
   onEliminarSensacion,
 }: {
   comida: Comida
+  /** Las que se muestran acá dentro; pueden venir recortadas por un filtro. */
   sensaciones: Sensacion[]
+  /** Si la comida tiene alguna sensación en la base, más allá del filtro. */
+  tieneSensaciones: boolean
   sintomas: Sintoma[]
   onEliminar: (id: string) => void
   onEliminarSensacion: (id: string) => void
@@ -115,7 +119,7 @@ export function ComidaCard({
             </div>
           ))}
         </div>
-      ) : (
+      ) : tieneSensaciones ? null : (
         <button
           onClick={() => navigate(`/sensacion/nueva?comida=${comida.id}`)}
           className="mt-3 w-full rounded-xl border border-dashed border-slate-300 py-2 text-sm text-slate-500 transition-colors hover:border-emerald-500 hover:text-emerald-600 dark:border-slate-700 dark:text-slate-400 dark:hover:border-emerald-500 dark:hover:text-emerald-400"

@@ -57,13 +57,18 @@ export function AddFeelingPage() {
   // La lista de recientes cubre las últimas horas; si la sensación quedó
   // asociada a una comida más vieja (al editar, o al venir desde "¿Cómo te
   // cayó?" de una comida de la mañana), la agregamos para no perder el vínculo.
+  //
+  // Siempre tiene que existir una opción con el comidaId seleccionado: si no,
+  // el <select> cae en la opción vacía y muestra "No, es independiente" cuando
+  // en realidad la asociación está puesta y se va a guardar. Además, al estar
+  // ya mostrada esa opción, elegirla no dispara onChange y el vínculo no se
+  // podría quitar. Mientras la comida carga se usa una etiqueta provisoria.
   const opcionesComida = useMemo(() => {
     if (!comidaId || comidasRecientes.some((c) => c.id === comidaId)) return comidasRecientes
-    if (!comidaAsociada) return comidasRecientes
-    return [
-      { id: comidaAsociada.id, nombre: comidaAsociada.nombre, fecha_hora: comidaAsociada.fechaHora },
-      ...comidasRecientes,
-    ]
+    const asociada = comidaAsociada
+      ? { id: comidaAsociada.id, nombre: comidaAsociada.nombre, fecha_hora: comidaAsociada.fechaHora }
+      : { id: comidaId, nombre: 'Comida seleccionada', fecha_hora: null }
+    return [asociada, ...comidasRecientes]
   }, [comidaId, comidasRecientes, comidaAsociada])
 
   function toggleSintoma(sid: string) {
@@ -144,7 +149,7 @@ export function AddFeelingPage() {
               <option value="">No, es independiente</option>
               {opcionesComida.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {formatHora(c.fecha_hora)} · {c.nombre}
+                  {c.fecha_hora ? `${formatHora(c.fecha_hora)} · ${c.nombre}` : c.nombre}
                 </option>
               ))}
             </select>

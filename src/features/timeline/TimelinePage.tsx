@@ -23,6 +23,7 @@ type Item =
       fechaHora: string
       data: import('../../types/domain').Comida
       sensaciones: import('../../types/domain').Sensacion[]
+      tieneSensaciones: boolean
     }
   | { tipo: 'sensacion'; fechaHora: string; data: import('../../types/domain').Sensacion }
 
@@ -43,18 +44,19 @@ export function TimelinePage() {
     const comidasFiltradas = filtroTipoComida
       ? comidas.filter((c) => c.tipoComida === filtroTipoComida)
       : comidas
-    const sensacionesFiltradas = filtroValoracion
-      ? sensaciones.filter((s) => s.valoracion === filtroValoracion)
-      : sensaciones
-
     // Las sensaciones asociadas a una comida se muestran dentro de su tarjeta.
     // Las independientes —y las que apuntan a una comida de otro día, que no
     // está en esta vista— van sueltas para que no desaparezcan del historial.
+    //
+    // El agrupado se hace sobre las sensaciones SIN filtrar: si filtrara antes,
+    // una comida cuya sensación no pasa el filtro parecería no tener ninguna y
+    // la tarjeta ofrecería "¿Cómo te cayó?", invitando a cargar una segunda
+    // sensación para la misma comida y desbalanceando las estadísticas.
     const idsComidasVisibles = new Set(comidasFiltradas.map((c) => c.id))
-    const sensacionesPorComida = new Map<string, typeof sensacionesFiltradas>()
-    const sensacionesSueltas: typeof sensacionesFiltradas = []
+    const sensacionesPorComida = new Map<string, typeof sensaciones>()
+    const sensacionesSueltas: typeof sensaciones = []
 
-    for (const s of sensacionesFiltradas) {
+    for (const s of sensaciones) {
       if (s.comidaId && idsComidasVisibles.has(s.comidaId)) {
         const previas = sensacionesPorComida.get(s.comidaId) ?? []
         sensacionesPorComida.set(s.comidaId, [...previas, s])
@@ -63,16 +65,32 @@ export function TimelinePage() {
       }
     }
 
+    const coincideFiltro = (s: (typeof sensaciones)[number]) =>
+      !filtroValoracion || s.valoracion === filtroValoracion
+
+    const comidasItems = comidasFiltradas.flatMap((c) => {
+      const propias = (sensacionesPorComida.get(c.id) ?? []).sort((a, b) =>
+        a.fechaHora < b.fechaHora ? -1 : 1,
+      )
+      const visibles = propias.filter(coincideFiltro)
+      // Con un filtro de valoración activo, una comida solo entra si alguna de
+      // sus sensaciones coincide; las que no tienen ninguna no aplican.
+      if (filtroValoracion && visibles.length === 0) return []
+      return [
+        {
+          tipo: 'comida' as const,
+          fechaHora: c.fechaHora,
+          data: c,
+          sensaciones: visibles,
+          // La invitación a registrar depende de la realidad, no de lo filtrado.
+          tieneSensaciones: propias.length > 0,
+        },
+      ]
+    })
+
     const todos: Item[] = [
-      ...comidasFiltradas.map((c) => ({
-        tipo: 'comida' as const,
-        fechaHora: c.fechaHora,
-        data: c,
-        sensaciones: (sensacionesPorComida.get(c.id) ?? []).sort((a, b) =>
-          a.fechaHora < b.fechaHora ? -1 : 1,
-        ),
-      })),
-      ...sensacionesSueltas.map((s) => ({
+      ...comidasItems,
+      ...sensacionesSueltas.filter(coincideFiltro).map((s) => ({
         tipo: 'sensacion' as const,
         fechaHora: s.fechaHora,
         data: s,
@@ -169,6 +187,7 @@ export function TimelinePage() {
                 key={`comida-${item.data.id}`}
                 comida={item.data}
                 sensaciones={item.sensaciones}
+                tieneSensaciones={item.tieneSensaciones}
                 sintomas={sintomas}
                 onEliminar={(id) => eliminarComida.mutate(id)}
                 onEliminarSensacion={(id) => eliminarSensacion.mutate(id)}

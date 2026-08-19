@@ -11,14 +11,29 @@ export interface ComidaInput {
 }
 
 async function ensureAlimentos(usuarioId: string, nombres: string[]) {
-  const limpios = [...new Set(nombres.map((n) => n.trim()).filter(Boolean))]
+  // Deduplicar ignorando mayúsculas y espacios: "Tomate", "tomate" y " tomate "
+  // son el mismo ingrediente, y contarlos por separado partiría en dos los
+  // registros que necesita la detección de patrones para llegar al umbral.
+  const limpios: string[] = []
+  const vistos = new Set<string>()
+  for (const n of nombres) {
+    const limpio = n.trim().replace(/\s+/g, ' ')
+    if (!limpio) continue
+    const clave = limpio.toLowerCase()
+    if (vistos.has(clave)) continue
+    vistos.add(clave)
+    limpios.push(limpio)
+  }
   if (limpios.length === 0) return []
 
+  // Se trae el catálogo entero en vez de filtrar con .in(): ese filtro compara
+  // con distinción de mayúsculas, así que no encontraba "Tomate" al escribir
+  // "tomate" y terminaba creando una fila duplicada. El catálogo de un diario
+  // personal es chico, traerlo completo es más simple que emular ilike por lote.
   const { data: existentes, error: errBusqueda } = await supabase
     .from('alimentos_catalogo')
     .select('id, nombre')
     .eq('usuario_id', usuarioId)
-    .in('nombre', limpios)
   if (errBusqueda) throw errBusqueda
 
   const existentesPorNombre = new Map(existentes?.map((a) => [a.nombre.toLowerCase(), a.id]))

@@ -148,6 +148,10 @@ insert into public.profiles (id)
 select u.id from auth.users u
 on conflict (id) do nothing;
 
+-- Solo para usuarios que no tienen ningún síntoma todavía. Sin este filtro,
+-- volver a correr el script le reinstalaría a quien ya borró síntomas desde
+-- Ajustes los que había eliminado: "on conflict do nothing" no distingue entre
+-- "nunca existió" y "el usuario lo borró a propósito".
 insert into public.sintomas_catalogo (usuario_id, nombre, tipo, orden)
 select u.id, s.nombre, s.tipo::tipo_sintoma, s.orden
 from auth.users u
@@ -164,6 +168,9 @@ cross join (values
   ('Buen sueño', 'positivo', 9),
   ('Buen ánimo', 'positivo', 10)
 ) as s(nombre, tipo, orden)
+where not exists (
+  select 1 from public.sintomas_catalogo sc where sc.usuario_id = u.id
+)
 on conflict (usuario_id, nombre) do nothing;
 
 -- ============================================================================
