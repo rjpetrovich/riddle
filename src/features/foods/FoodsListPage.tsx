@@ -42,8 +42,14 @@ export function FoodsListPage() {
                 <div>
                   <p className="font-medium text-slate-900 dark:text-slate-100">{a.nombre}</p>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {/* El porcentaje se calcula sobre los registros con
+                        sensación, no sobre las veces que se comió: mostrarlos
+                        juntos sin aclararlo hacía leer el "% bien" como si
+                        fuera sobre el total. */}
                     {a.vecesComido} {a.vecesComido === 1 ? 'vez' : 'veces'}
-                    {a.conSensacion > 0 && ` · ${Math.round(a.pctBien * 100)}% bien`}
+                    {a.conSensacion > 0
+                      ? ` · ${Math.round(a.pctBien * 100)}% bien de ${a.conSensacion} con registro`
+                      : ' · sin sensaciones registradas'}
                   </p>
                 </div>
               </div>
