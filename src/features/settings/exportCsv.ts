@@ -11,22 +11,31 @@ interface FilaExport {
 }
 
 export async function exportarHistorialCsv(usuarioId: string) {
-  const [{ data: comidas, error: errComidas }, { data: sensaciones, error: errSensaciones }] =
-    await Promise.all([
-      supabase
-        .from('comidas')
-        .select('fecha_hora, tipo_comida, nombre, notas, comida_alimentos(alimentos_catalogo(nombre))')
-        .eq('usuario_id', usuarioId)
-        .order('fecha_hora'),
-      supabase
-        .from('sensaciones')
-        .select('fecha_hora, valoracion, intensidad, notas, sensacion_sintomas(sintomas_catalogo(nombre))')
-        .eq('usuario_id', usuarioId)
-        .order('fecha_hora'),
-    ])
+  const [
+    { data: comidas, error: errComidas },
+    { data: sensaciones, error: errSensaciones },
+    { data: contadores, error: errContadores },
+  ] = await Promise.all([
+    supabase
+      .from('comidas')
+      .select('fecha_hora, tipo_comida, nombre, notas, comida_alimentos(alimentos_catalogo(nombre))')
+      .eq('usuario_id', usuarioId)
+      .order('fecha_hora'),
+    supabase
+      .from('sensaciones')
+      .select('fecha_hora, valoracion, intensidad, notas, sensacion_sintomas(sintomas_catalogo(nombre))')
+      .eq('usuario_id', usuarioId)
+      .order('fecha_hora'),
+    supabase
+      .from('contadores_dia')
+      .select('fecha, vasos_agua, idas_bano')
+      .eq('usuario_id', usuarioId)
+      .order('fecha'),
+  ])
 
   if (errComidas) throw errComidas
   if (errSensaciones) throw errSensaciones
+  if (errContadores) throw errContadores
 
   const filas: FilaExport[] = [
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -54,6 +63,19 @@ export async function exportarHistorialCsv(usuarioId: string) {
       valoracion: s.valoracion,
       intensidad: s.intensidad ?? '',
       notas: s.notas ?? '',
+    })),
+    // Los contadores son del día entero, no de un momento: se ubican al
+    // mediodía para que queden ordenados dentro de su jornada y no antes de
+    // las comidas de la mañana.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...(contadores ?? []).map((c: any) => ({
+      fecha_hora: `${c.fecha}T12:00:00`,
+      tipo: 'contadores_dia',
+      nombre: '',
+      ingredientes_o_sintomas: '',
+      valoracion: '',
+      intensidad: '',
+      notas: `vasos de agua: ${c.vasos_agua}; idas al baño: ${c.idas_bano}`,
     })),
   ].sort((a, b) => (a.fecha_hora < b.fecha_hora ? -1 : 1))
 

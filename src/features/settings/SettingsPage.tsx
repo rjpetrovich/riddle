@@ -6,11 +6,13 @@ import { useAuth } from '../auth/AuthProvider'
 import { useDarkMode } from '../../hooks/useDarkMode'
 import { SymptomsEditor } from './SymptomsEditor'
 import { exportarHistorialCsv } from './exportCsv'
+import { useContarBano } from '../contadores/useContadores'
 
 export function SettingsPage() {
   const { user, signOut } = useAuth()
   const { preference, setPreference } = useDarkMode()
   const [exportando, setExportando] = useState(false)
+  const { activo: contarBano, cambiar: cambiarContarBano } = useContarBano()
 
   async function handleExportar() {
     if (!user) return
@@ -51,6 +53,27 @@ export function SettingsPage() {
               </button>
             ))}
           </div>
+        </Card>
+
+        <Card>
+          <h2 className="mb-1 font-medium text-slate-900 dark:text-slate-100">
+            Contadores del día
+          </h2>
+          <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
+            Los vasos de agua se cuentan siempre. Las idas al baño son opcionales, por si preferís
+            no registrarlas.
+          </p>
+          <label className="flex items-center justify-between gap-3">
+            <span className="text-sm text-slate-700 dark:text-slate-200">
+              🚽 Contar idas al baño
+            </span>
+            <input
+              type="checkbox"
+              checked={contarBano}
+              onChange={(e) => cambiarContarBano(e.target.checked)}
+              className="h-5 w-5"
+            />
+          </label>
         </Card>
 
         <Card>

@@ -13,6 +13,7 @@ export function invalidarDatosDeRegistro(queryClient: QueryClient) {
     'comidas',
     'comida',
     'calendario',
+    'contadores',
     'comidas-recientes',
     'comidas-pendientes',
     'sensaciones',

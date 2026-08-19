@@ -9,6 +9,7 @@ import { PendientesCard } from '../reminders/PendientesCard'
 import { agruparTimeline } from './agruparTimeline'
 import { CalendarioMes } from './CalendarioMes'
 import { mismoDia } from './calendario'
+import { ContadoresCard } from '../contadores/ContadoresCard'
 import { formatFechaCorta } from '../../lib/dateUtils'
 import { TIPOS_COMIDA, type TipoComida, type Valoracion } from '../../types/domain'
 
@@ -80,6 +81,12 @@ export function TimelinePage() {
             Ir a hoy
           </button>
         )}
+      </div>
+
+      {/* Los contadores son del día que se está mirando, así que van debajo de
+          su encabezado y no del calendario. */}
+      <div className="mt-2 px-4">
+        <ContadoresCard dia={fecha} />
       </div>
 
       <div className="mt-3 flex gap-2 overflow-x-auto px-4 pb-1">
