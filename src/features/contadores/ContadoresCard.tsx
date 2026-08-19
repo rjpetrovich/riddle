@@ -75,8 +75,11 @@ export function ContadoresCard({ dia }: { dia: Date }) {
         />
       ))}
       {error && (
+        // Se muestra el mensaje real y no uno genérico: decir "revisá la
+        // conexión" ante cualquier fallo manda a buscar el problema donde no
+        // está (una tabla que falta, un permiso) y deja sin pistas.
         <p className="text-xs text-red-600 dark:text-red-400">
-          No se pudo guardar. Revisá la conexión.
+          No se pudo guardar: {error instanceof Error ? error.message : String(error)}
         </p>
       )}
     </Card>
