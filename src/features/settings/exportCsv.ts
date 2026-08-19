@@ -1,4 +1,3 @@
-import Papa from 'papaparse'
 import { supabase } from '../../lib/supabaseClient'
 
 interface FilaExport {
@@ -58,6 +57,9 @@ export async function exportarHistorialCsv(usuarioId: string) {
     })),
   ].sort((a, b) => (a.fecha_hora < b.fecha_hora ? -1 : 1))
 
+  // Se carga acá y no arriba: exportar es algo puntual, no hace falta que la
+  // librería viaje en el arranque de la app.
+  const { default: Papa } = await import('papaparse')
   const csv = Papa.unparse(filas)
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
