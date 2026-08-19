@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../auth/AuthProvider'
+import { invalidarDatosDeRegistro } from '../../lib/invalidar'
 import { queryKeys } from '../../lib/queryKeys'
 import {
   actualizarComida,
@@ -32,10 +33,7 @@ export function useCrearComida() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (input: ComidaInput) => crearComida(user!.id, input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['comidas'] })
-      queryClient.invalidateQueries({ queryKey: ['alimentos'] })
-    },
+    onSuccess: () => invalidarDatosDeRegistro(queryClient),
   })
 }
 
@@ -45,10 +43,7 @@ export function useActualizarComida() {
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: Omit<ComidaInput, 'foto'> }) =>
       actualizarComida(id, user!.id, input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['comidas'] })
-      queryClient.invalidateQueries({ queryKey: ['alimentos'] })
-    },
+    onSuccess: () => invalidarDatosDeRegistro(queryClient),
   })
 }
 
@@ -56,9 +51,6 @@ export function useEliminarComida() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => eliminarComida(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['comidas'] })
-      queryClient.invalidateQueries({ queryKey: ['alimentos'] })
-    },
+    onSuccess: () => invalidarDatosDeRegistro(queryClient),
   })
 }

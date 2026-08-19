@@ -5,6 +5,7 @@ import { Spinner } from '../../components/ui/Spinner'
 import { useComidasRango, useEliminarComida } from '../meals/useMeals'
 import { useEliminarSensacion, useSensacionesRango, useSintomas } from '../feelings/useFeelings'
 import { ComidaCard, SensacionCard } from './RecordCard'
+import { PendientesCard } from '../reminders/PendientesCard'
 import { formatFechaCorta } from '../../lib/dateUtils'
 import { TIPOS_COMIDA, type TipoComida, type Valoracion } from '../../types/domain'
 
@@ -110,6 +111,12 @@ export function TimelinePage() {
   return (
     <div className="pb-24">
       <PageHeader title="Cómo Me Cae" />
+
+      {/* Fuera del filtro por día a propósito: una comida de anoche sin
+          registrar tiene que verse aunque estés mirando hoy. */}
+      <div className="px-4 pb-1">
+        <PendientesCard />
+      </div>
 
       <div className="flex items-center justify-between px-4">
         <button

@@ -71,6 +71,20 @@ export function AddFeelingPage() {
     return [asociada, ...comidasRecientes]
   }, [comidaId, comidasRecientes, comidaAsociada])
 
+  // Los efectos de una comida (digestión, hinchazón, energía) tardan horas en
+  // aparecer. Registrar la sensación al minuto de comer anota cómo estabas
+  // antes de que la comida hiciera efecto, y eso ensucia todos los patrones.
+  const avisoTemporal = useMemo(() => {
+    if (!comidaAsociada) return null
+    const horas = (new Date(fechaHora).getTime() - new Date(comidaAsociada.fechaHora).getTime()) / 3_600_000
+    if (Number.isNaN(horas)) return null
+    if (horas < 0) return 'Esta hora es anterior a la de la comida.'
+    if (horas < 1)
+      return 'Acabás de comer. Los efectos suelen notarse entre 2 y 6 horas después, así que quizá convenga registrar esto más tarde.'
+    const redondeado = Math.round(horas)
+    return `Pasaron ${redondeado} ${redondeado === 1 ? 'hora' : 'horas'} desde esta comida.`
+  }, [comidaAsociada, fechaHora])
+
   function toggleSintoma(sid: string) {
     setSintomaIds((prev) => (prev.includes(sid) ? prev.filter((s) => s !== sid) : [...prev, sid]))
   }
@@ -135,6 +149,12 @@ export function AddFeelingPage() {
           onChange={(e) => setFechaHora(e.target.value)}
           required
         />
+
+        {avisoTemporal && (
+          <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
+            {avisoTemporal}
+          </p>
+        )}
 
         {opcionesComida.length > 0 && (
           <div className="flex flex-col gap-1">

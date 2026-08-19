@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../auth/AuthProvider'
+import { invalidarDatosDeRegistro } from '../../lib/invalidar'
 import { queryKeys } from '../../lib/queryKeys'
 import {
   actualizarSensacion,
@@ -25,9 +26,7 @@ export function useActualizarSensacion() {
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: SensacionInput }) =>
       actualizarSensacion(id, input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sensaciones'] })
-    },
+    onSuccess: () => invalidarDatosDeRegistro(queryClient),
   })
 }
 
@@ -63,9 +62,7 @@ export function useCrearSensacion() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (input: SensacionInput) => crearSensacion(user!.id, input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sensaciones'] })
-    },
+    onSuccess: () => invalidarDatosDeRegistro(queryClient),
   })
 }
 
@@ -73,8 +70,6 @@ export function useEliminarSensacion() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => eliminarSensacion(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sensaciones'] })
-    },
+    onSuccess: () => invalidarDatosDeRegistro(queryClient),
   })
 }
