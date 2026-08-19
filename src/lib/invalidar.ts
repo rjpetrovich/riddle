@@ -12,6 +12,7 @@ export function invalidarDatosDeRegistro(queryClient: QueryClient) {
   for (const key of [
     'comidas',
     'comida',
+    'calendario',
     'comidas-recientes',
     'comidas-pendientes',
     'sensaciones',

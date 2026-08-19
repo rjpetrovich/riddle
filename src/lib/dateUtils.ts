@@ -22,6 +22,16 @@ export function nowLocalInputValue(): string {
   return new Date(now.getTime() - offsetMs).toISOString().slice(0, 16)
 }
 
-export function dateKey(iso: string): string {
-  return parseISO(iso).toISOString().slice(0, 10)
+/**
+ * Clave de día en hora local (YYYY-MM-DD).
+ *
+ * A propósito no usa toISOString(), que trabaja en UTC: una cena de las 22:00
+ * en UTC-3 caería en el día siguiente y aparecería en la casilla equivocada del
+ * calendario.
+ */
+export function claveDiaLocal(fecha: Date | string): string {
+  const d = typeof fecha === 'string' ? parseISO(fecha) : fecha
+  const mes = String(d.getMonth() + 1).padStart(2, '0')
+  const dia = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}-${mes}-${dia}`
 }

@@ -7,6 +7,8 @@ import { useEliminarSensacion, useSensacionesRango, useSintomas } from '../feeli
 import { ComidaCard, SensacionCard } from './RecordCard'
 import { PendientesCard } from '../reminders/PendientesCard'
 import { agruparTimeline } from './agruparTimeline'
+import { CalendarioMes } from './CalendarioMes'
+import { mismoDia } from './calendario'
 import { formatFechaCorta } from '../../lib/dateUtils'
 import { TIPOS_COMIDA, type TipoComida, type Valoracion } from '../../types/domain'
 
@@ -20,6 +22,10 @@ function startEndOfDay(date: Date) {
 
 export function TimelinePage() {
   const [fecha, setFecha] = useState(new Date())
+  const [mes, setMes] = useState(() => {
+    const hoy = new Date()
+    return new Date(hoy.getFullYear(), hoy.getMonth(), 1)
+  })
   const [filtroTipoComida, setFiltroTipoComida] = useState<TipoComida | ''>('')
   const [filtroValoracion, setFiltroValoracion] = useState<Valoracion | ''>('')
 
@@ -35,14 +41,6 @@ export function TimelinePage() {
     [comidas, sensaciones, filtroTipoComida, filtroValoracion],
   )
 
-  function cambiarDia(delta: number) {
-    setFecha((prev) => {
-      const next = new Date(prev)
-      next.setDate(next.getDate() + delta)
-      return next
-    })
-  }
-
   const cargando = cargandoComidas || cargandoSensaciones
 
   return (
@@ -55,24 +53,33 @@ export function TimelinePage() {
         <PendientesCard />
       </div>
 
-      <div className="flex items-center justify-between px-4">
-        <button
-          onClick={() => cambiarDia(-1)}
-          className="rounded-full p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
-          aria-label="Día anterior"
-        >
-          ‹
-        </button>
-        <span className="font-medium text-slate-700 dark:text-slate-200">
+      <CalendarioMes
+        mes={mes}
+        diaSeleccionado={fecha}
+        onSeleccionarDia={(d) => {
+          setFecha(d)
+          // Tocar un día del mes vecino mueve también la vista del mes.
+          if (d.getMonth() !== mes.getMonth()) setMes(new Date(d.getFullYear(), d.getMonth(), 1))
+        }}
+        onCambiarMes={setMes}
+      />
+
+      <div className="mt-3 flex items-center justify-between px-4">
+        <h2 className="font-medium capitalize text-slate-700 dark:text-slate-200">
           {formatFechaCorta(fecha.toISOString())}
-        </span>
-        <button
-          onClick={() => cambiarDia(1)}
-          className="rounded-full p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
-          aria-label="Día siguiente"
-        >
-          ›
-        </button>
+        </h2>
+        {!mismoDia(fecha, new Date()) && (
+          <button
+            onClick={() => {
+              const hoy = new Date()
+              setFecha(hoy)
+              setMes(new Date(hoy.getFullYear(), hoy.getMonth(), 1))
+            }}
+            className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 dark:border-slate-700 dark:text-slate-300"
+          >
+            Ir a hoy
+          </button>
+        )}
       </div>
 
       <div className="mt-3 flex gap-2 overflow-x-auto px-4 pb-1">
