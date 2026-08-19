@@ -36,22 +36,26 @@ export function AddMealPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    if (esEdicion && id) {
-      await actualizarComida.mutateAsync({
-        id,
-        input: { nombre, fechaHora: new Date(fechaHora).toISOString(), tipoComida, ingredientes, notas },
-      })
-    } else {
-      await crearComida.mutateAsync({
-        nombre,
-        fechaHora: new Date(fechaHora).toISOString(),
-        tipoComida,
-        ingredientes,
-        notas,
-        foto,
-      })
+    try {
+      if (esEdicion && id) {
+        await actualizarComida.mutateAsync({
+          id,
+          input: { nombre, fechaHora: new Date(fechaHora).toISOString(), tipoComida, ingredientes, notas },
+        })
+      } else {
+        await crearComida.mutateAsync({
+          nombre,
+          fechaHora: new Date(fechaHora).toISOString(),
+          tipoComida,
+          ingredientes,
+          notas,
+          foto,
+        })
+      }
+      navigate('/')
+    } catch {
+      // el error ya queda expuesto vía crearComida.error / actualizarComida.error
     }
-    navigate('/')
   }
 
   if (esEdicion && cargandoComida) {
@@ -125,6 +129,13 @@ export function AddMealPage() {
           onChange={(e) => setNotas(e.target.value)}
           rows={2}
         />
+
+        {(crearComida.error || actualizarComida.error) && (
+          <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-400">
+            {(crearComida.error ?? actualizarComida.error)?.message ??
+              'No se pudo guardar. Probá de nuevo.'}
+          </p>
+        )}
 
         <div className="mt-2 flex gap-3">
           <Button type="button" variant="secondary" className="flex-1" onClick={() => navigate(-1)}>

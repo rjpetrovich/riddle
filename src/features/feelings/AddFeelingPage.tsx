@@ -63,12 +63,16 @@ export function AddFeelingPage() {
       notas,
       sintomaIds,
     }
-    if (esEdicion && id) {
-      await actualizarSensacion.mutateAsync({ id, input })
-    } else {
-      await crearSensacion.mutateAsync(input)
+    try {
+      if (esEdicion && id) {
+        await actualizarSensacion.mutateAsync({ id, input })
+      } else {
+        await crearSensacion.mutateAsync(input)
+      }
+      navigate('/')
+    } catch {
+      // el error ya queda expuesto vía crearSensacion.error / actualizarSensacion.error
     }
-    navigate('/')
   }
 
   if (esEdicion && cargandoSensacion) {
@@ -178,6 +182,13 @@ export function AddFeelingPage() {
           onChange={(e) => setNotas(e.target.value)}
           rows={2}
         />
+
+        {(crearSensacion.error || actualizarSensacion.error) && (
+          <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-400">
+            {(crearSensacion.error ?? actualizarSensacion.error)?.message ??
+              'No se pudo guardar. Probá de nuevo.'}
+          </p>
+        )}
 
         <div className="mt-2 flex gap-3">
           <Button type="button" variant="secondary" className="flex-1" onClick={() => navigate(-1)}>
