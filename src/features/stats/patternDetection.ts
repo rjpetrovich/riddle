@@ -98,6 +98,62 @@ export function calcularStatsPorAlimento(
   return stats.sort((a, b) => b.vecesComido - a.vecesComido)
 }
 
+export interface ParInseparable {
+  alimentoA: string
+  alimentoB: string
+  vecesJuntos: number
+}
+
+/**
+ * Ingredientes que en el período nunca aparecieron por separado.
+ *
+ * Es un límite real del método: si siempre comés arepa con queso, los dos
+ * heredan exactamente la misma valoración y el algoritmo los marca igual de
+ * sospechosos, sin poder decir cuál de los dos te cae mal. Detectarlo permite
+ * avisarlo en vez de dejar que se lea como una conclusión sobre ambos.
+ *
+ * Solo interesa a partir del mínimo de registros: por debajo, todavía no hay
+ * nada que concluir sobre ninguno de los dos.
+ */
+export function detectarParesInseparables(
+  comidas: ComidaCruda[],
+  sensaciones: SensacionCruda[],
+): ParInseparable[] {
+  const valoracionPorComida = peorValoracionPorComida(sensaciones)
+  // Solo cuentan las comidas que aportan a las estadísticas.
+  const conValoracion = comidas.filter((c) => valoracionPorComida.has(c.id))
+
+  const comidasPorAlimento = new Map<string, Set<string>>()
+  for (const c of conValoracion) {
+    for (const a of c.alimentoIds) {
+      if (!comidasPorAlimento.has(a)) comidasPorAlimento.set(a, new Set())
+      comidasPorAlimento.get(a)!.add(c.id)
+    }
+  }
+
+  const pares: ParInseparable[] = []
+  const alimentos = [...comidasPorAlimento.keys()]
+  for (let i = 0; i < alimentos.length; i++) {
+    for (let j = i + 1; j < alimentos.length; j++) {
+      const setA = comidasPorAlimento.get(alimentos[i])!
+      const setB = comidasPorAlimento.get(alimentos[j])!
+      if (setA.size !== setB.size || setA.size < UMBRAL_MIN_REGISTROS) continue
+      // Mismo tamaño y misma pertenencia: nunca se comieron por separado.
+      let identicos = true
+      for (const id of setA) {
+        if (!setB.has(id)) {
+          identicos = false
+          break
+        }
+      }
+      if (identicos) {
+        pares.push({ alimentoA: alimentos[i], alimentoB: alimentos[j], vecesJuntos: setA.size })
+      }
+    }
+  }
+  return pares.sort((a, b) => b.vecesJuntos - a.vecesJuntos)
+}
+
 export function ocurrenciasDeAlimento(
   alimentoId: string,
   comidas: ComidaCruda[],

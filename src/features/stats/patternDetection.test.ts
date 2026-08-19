@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   calcularStatsPorAlimento,
   ocurrenciasDeAlimento,
+  detectarParesInseparables,
   peorValoracionPorComida,
   type ComidaCruda,
   type SensacionCruda,
@@ -126,6 +127,63 @@ describe('calcularStatsPorAlimento', () => {
     const comidas = [comida('c1', ['a', 'b']), comida('c2', ['b']), comida('c3', ['b'])]
     const stats = calcularStatsPorAlimento(comidas, [])
     expect(stats.map((s) => s.alimentoId)).toEqual(['b', 'a'])
+  })
+})
+
+describe('detectarParesInseparables', () => {
+  it('detecta dos ingredientes que nunca se comieron por separado', () => {
+    const comidas = ['c1', 'c2', 'c3'].map((id) => comida(id, ['arepa', 'queso']))
+    const pares = detectarParesInseparables(comidas, [
+      sens('c1', 'mal'),
+      sens('c2', 'mal'),
+      sens('c3', 'mal'),
+    ])
+    expect(pares).toHaveLength(1)
+    expect(pares[0].vecesJuntos).toBe(3)
+  })
+
+  it('no los reporta si alguna vez aparecieron separados', () => {
+    const comidas = [
+      comida('c1', ['arepa', 'queso']),
+      comida('c2', ['arepa', 'queso']),
+      comida('c3', ['arepa']),
+    ]
+    const pares = detectarParesInseparables(comidas, [
+      sens('c1', 'mal'),
+      sens('c2', 'mal'),
+      sens('c3', 'bien'),
+    ])
+    expect(pares).toHaveLength(0)
+  })
+
+  it('no reporta pares por debajo del mínimo de registros', () => {
+    const comidas = ['c1', 'c2'].map((id) => comida(id, ['arepa', 'queso']))
+    const pares = detectarParesInseparables(comidas, [sens('c1', 'mal'), sens('c2', 'mal')])
+    expect(pares).toHaveLength(0)
+  })
+
+  it('ignora comidas sin sensación, que no aportan a las estadísticas', () => {
+    const comidas = ['c1', 'c2', 'c3', 'c4'].map((id) => comida(id, ['arepa', 'queso']))
+    // Solo 2 tienen sensación: no alcanza el mínimo.
+    const pares = detectarParesInseparables(comidas, [sens('c1', 'mal'), sens('c2', 'mal')])
+    expect(pares).toHaveLength(0)
+  })
+
+  it('no confunde un par con otro que solo comparte un ingrediente', () => {
+    const comidas = [
+      comida('c1', ['arepa', 'queso']),
+      comida('c2', ['arepa', 'queso']),
+      comida('c3', ['arepa', 'queso']),
+      comida('c4', ['queso', 'pan']),
+    ]
+    const pares = detectarParesInseparables(comidas, [
+      sens('c1', 'mal'),
+      sens('c2', 'mal'),
+      sens('c3', 'mal'),
+      sens('c4', 'bien'),
+    ])
+    // Con c4, queso ya apareció sin arepa: ningún par es inseparable.
+    expect(pares).toHaveLength(0)
   })
 })
 

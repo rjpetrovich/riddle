@@ -1,7 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../auth/AuthProvider'
 import { fetchDatosParaPatrones } from './foodsApi'
-import { calcularStatsPorAlimento, ocurrenciasDeAlimento, type AlimentoStats } from '../stats/patternDetection'
+import {
+  calcularStatsPorAlimento,
+  detectarParesInseparables,
+  ocurrenciasDeAlimento,
+  type AlimentoStats,
+} from '../stats/patternDetection'
 
 export function useDatosCrudos() {
   const { user } = useAuth()
@@ -40,6 +45,20 @@ export function useAlimentosStatsEnRango(
   }))
 
   return { data: stats, isLoading }
+}
+
+export function useParesInseparables(desdeISO: string, hastaISO: string) {
+  const { data } = useDatosCrudos()
+  if (!data) return []
+
+  const comidasEnRango = data.comidas.filter(
+    (c) => c.fechaHora >= desdeISO && c.fechaHora <= hastaISO,
+  )
+  return detectarParesInseparables(comidasEnRango, data.sensaciones).map((p) => ({
+    ...p,
+    nombreA: data.nombresPorAlimentoId.get(p.alimentoA) ?? '',
+    nombreB: data.nombresPorAlimentoId.get(p.alimentoB) ?? '',
+  }))
 }
 
 export function useFoodDetail(alimentoId: string | undefined) {

@@ -6,7 +6,7 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import { Spinner } from '../../components/ui/Spinner'
 import { Chip } from '../../components/ui/Chip'
 import { StatTile } from '../../components/ui/StatTile'
-import { useAlimentosStatsEnRango } from '../foods/useFoodStats'
+import { useAlimentosStatsEnRango, useParesInseparables } from '../foods/useFoodStats'
 import { DivergingSentimentBar, LeyendaValoracion } from './DivergingSentimentBar'
 import { COLOR_VALORACION } from './chartTokens'
 
@@ -23,6 +23,7 @@ export function StatsPage() {
   const desde = useMemo(() => inicioDePeriodo(periodo), [periodo])
   const hasta = useMemo(() => new Date().toISOString(), [])
   const { data: alimentos, isLoading } = useAlimentosStatsEnRango(desde, hasta)
+  const paresInseparables = useParesInseparables(desde, hasta)
 
   const conRegistros = alimentos.filter((a) => a.conSensacion > 0)
   const sospechosos = alimentos.filter((a) => a.sospechoso)
@@ -135,6 +136,33 @@ export function StatsPage() {
               onSeleccionar={(id) => navigate(`/ingredientes/${id}`)}
             />
           </Card>
+
+          {paresInseparables.length > 0 && (
+            <Card>
+              <h2 className="font-medium text-slate-900 dark:text-slate-100">
+                No se pueden separar todavía
+              </h2>
+              <p className="mt-1 mb-3 text-sm text-slate-500 dark:text-slate-400">
+                Estos siempre los comiste juntos, así que comparten la misma valoración y no hay
+                forma de saber cuál de los dos influye. Probá uno sin el otro para distinguirlos.
+              </p>
+              <ul className="flex flex-col gap-2">
+                {paresInseparables.map((p) => (
+                  <li
+                    key={`${p.alimentoA}-${p.alimentoB}`}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-700"
+                  >
+                    <span className="truncate text-sm text-slate-800 dark:text-slate-100">
+                      {p.nombreA} + {p.nombreB}
+                    </span>
+                    <span className="shrink-0 text-xs tabular-nums text-slate-500 dark:text-slate-400">
+                      {p.vecesJuntos} veces juntos
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
 
           {sinDatosSuficientes > 0 && (
             <p className="px-1 text-xs text-slate-400">
