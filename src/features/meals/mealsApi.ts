@@ -10,10 +10,13 @@ export interface ComidaInput {
   foto?: File | null
 }
 
-async function ensureAlimentos(usuarioId: string, nombres: string[]) {
-  // Deduplicar ignorando mayúsculas y espacios: "Tomate", "tomate" y " tomate "
-  // son el mismo ingrediente, y contarlos por separado partiría en dos los
-  // registros que necesita la detección de patrones para llegar al umbral.
+/**
+ * Deduplica ignorando mayúsculas y espacios: "Tomate", "tomate" y " tomate "
+ * son el mismo ingrediente, y contarlos por separado partiría en dos los
+ * registros que necesita la detección de patrones para llegar al umbral.
+ * Se conserva la primera forma escrita, que es la que verá el usuario.
+ */
+export function normalizarIngredientes(nombres: string[]): string[] {
   const limpios: string[] = []
   const vistos = new Set<string>()
   for (const n of nombres) {
@@ -24,6 +27,11 @@ async function ensureAlimentos(usuarioId: string, nombres: string[]) {
     vistos.add(clave)
     limpios.push(limpio)
   }
+  return limpios
+}
+
+async function ensureAlimentos(usuarioId: string, nombres: string[]) {
+  const limpios = normalizarIngredientes(nombres)
   if (limpios.length === 0) return []
 
   // Se trae el catálogo entero en vez de filtrar con .in(): ese filtro compara
