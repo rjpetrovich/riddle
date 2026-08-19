@@ -8,6 +8,7 @@ import { SymptomsEditor } from './SymptomsEditor'
 import { exportarHistorialCsv } from './exportCsv'
 import { useContarBano } from '../contadores/useContadores'
 import { useMetaAgua } from '../contadores/useMetaAgua'
+import { DatosDePruebaCard } from './DatosDePruebaCard'
 
 export function SettingsPage() {
   const { user, signOut } = useAuth()
@@ -107,6 +108,8 @@ export function SettingsPage() {
           </p>
           <SymptomsEditor />
         </Card>
+
+        <DatosDePruebaCard />
 
         <Card>
           <h2 className="mb-1 font-medium text-slate-900 dark:text-slate-100">Exportar datos</h2>

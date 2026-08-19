@@ -30,7 +30,7 @@ export function normalizarIngredientes(nombres: string[]): string[] {
   return limpios
 }
 
-async function ensureAlimentos(usuarioId: string, nombres: string[]) {
+export async function ensureAlimentos(usuarioId: string, nombres: string[]) {
   const limpios = normalizarIngredientes(nombres)
   if (limpios.length === 0) return []
 
