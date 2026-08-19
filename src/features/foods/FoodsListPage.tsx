@@ -28,7 +28,7 @@ export function FoodsListPage() {
         ) : alimentos.length === 0 ? (
           <EmptyState
             title="Todavía no registraste alimentos"
-            subtitle="Aparecerán acá a medida que agregues comidas."
+            subtitle="Los alimentos salen del campo Ingredientes de cada comida. Si cargaste comidas sin ingredientes, editalas y agregalos para empezar a ver patrones."
           />
         ) : (
           alimentos.map((a) => (

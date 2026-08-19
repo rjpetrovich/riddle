@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
@@ -7,7 +7,7 @@ import { PageHeader } from '../../components/ui/PageHeader'
 import { Spinner } from '../../components/ui/Spinner'
 import { nowLocalInputValue } from '../../lib/dateUtils'
 import { TIPOS_COMIDA, type TipoComida } from '../../types/domain'
-import { IngredientesInput } from './IngredientesInput'
+import { IngredientesInput, type IngredientesInputHandle } from './IngredientesInput'
 import { useActualizarComida, useComidaPorId, useCrearComida } from './useMeals'
 
 export function AddMealPage() {
@@ -24,6 +24,7 @@ export function AddMealPage() {
   const [ingredientes, setIngredientes] = useState<string[]>([])
   const [notas, setNotas] = useState('')
   const [foto, setFoto] = useState<File | null>(null)
+  const ingredientesRef = useRef<IngredientesInputHandle>(null)
 
   useEffect(() => {
     if (!comidaExistente) return
@@ -36,18 +37,26 @@ export function AddMealPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
+    // Toma también el ingrediente que quedó escrito sin confirmar con Enter.
+    const ingredientesFinal = ingredientesRef.current?.flush() ?? ingredientes
     try {
       if (esEdicion && id) {
         await actualizarComida.mutateAsync({
           id,
-          input: { nombre, fechaHora: new Date(fechaHora).toISOString(), tipoComida, ingredientes, notas },
+          input: {
+            nombre,
+            fechaHora: new Date(fechaHora).toISOString(),
+            tipoComida,
+            ingredientes: ingredientesFinal,
+            notas,
+          },
         })
       } else {
         await crearComida.mutateAsync({
           nombre,
           fechaHora: new Date(fechaHora).toISOString(),
           tipoComida,
-          ingredientes,
+          ingredientes: ingredientesFinal,
           notas,
           foto,
         })
@@ -105,7 +114,7 @@ export function AddMealPage() {
           </div>
         </div>
 
-        <IngredientesInput value={ingredientes} onChange={setIngredientes} />
+        <IngredientesInput ref={ingredientesRef} value={ingredientes} onChange={setIngredientes} />
 
         {!esEdicion && (
           <div className="flex flex-col gap-1">
